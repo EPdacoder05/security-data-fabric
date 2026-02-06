@@ -52,6 +52,8 @@ class NormalizedEvent(Base):
     severity = Column(Integer, nullable=False, index=True)  # 1-5 scale
     title = Column(String(500), nullable=False)
     description = Column(Text)
+    # Column named 'event_metadata' in DB but mapped to 'metadata' attribute
+    # to avoid SQLAlchemy's reserved 'metadata' attribute on Base class
     event_metadata = Column("event_metadata", JSON, key="metadata")
     content_hash = Column(String(64), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
