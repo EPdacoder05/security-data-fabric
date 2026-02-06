@@ -64,7 +64,12 @@ class RawEvent(Base):
 
 
 class NormalizedEvent(Base):
-    """Silver layer: normalized unified events."""
+    """
+    Silver layer: normalized unified events.
+    
+    Note: Uses metadata_json for the 'metadata' column to avoid SQLAlchemy's
+    reserved 'metadata' attribute. Access as event.metadata_json in code.
+    """
     __tablename__ = "normalized_events"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -91,7 +96,7 @@ class NormalizedEvent(Base):
     environment = Column(String(50), nullable=True)
     region = Column(String(50), nullable=True)
     
-    # Metadata
+    # Metadata (uses metadata_json to avoid SQLAlchemy reserved keyword)
     tags = Column(JSON, nullable=True)
     metadata_json = Column("metadata", JSON, nullable=True)
     content_hash = Column(String(64), nullable=False, index=True)  # For deduplication
