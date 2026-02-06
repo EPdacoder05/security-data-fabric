@@ -455,8 +455,8 @@ class EventNormalizer:
         elif isinstance(timestamp, str):
             try:
                 dt = dateutil_parser.parse(timestamp)
-            except:
-                logger.warning(f"Failed to parse timestamp: {timestamp}")
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Failed to parse timestamp: {timestamp}, error: {e}")
                 dt = datetime.now(timezone.utc)
         else:
             dt = datetime.now(timezone.utc)
