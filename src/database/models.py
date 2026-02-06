@@ -93,7 +93,7 @@ class NormalizedEvent(Base):
     
     # Metadata
     tags = Column(JSON, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
     content_hash = Column(String(64), nullable=False, index=True)  # For deduplication
     
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -147,7 +147,7 @@ class Incident(Base):
     
     # Metadata
     tags = Column(JSON, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
     
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -223,7 +223,7 @@ class Prediction(Base):
     was_accurate = Column(Boolean, nullable=True)  # Post-mortem accuracy
     
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
     
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -253,7 +253,7 @@ class Embedding(Base):
     
     # Metadata
     model_version = Column(String(100), nullable=False)
-    metadata = Column(JSON, nullable=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
     
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     
@@ -297,7 +297,7 @@ class AlertHistory(Base):
     external_id = Column(String(255), nullable=True)
     
     # Metadata
-    metadata = Column(JSON, nullable=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
     
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     
