@@ -99,6 +99,7 @@ class Settings(BaseSettings):
     correlation_time_window_minutes: int = Field(default=5, description="Correlation time window")
     dedup_time_window_minutes: int = Field(default=5, description="Deduplication time window")
     timeline_lookback_hours: int = Field(default=24, description="Timeline lookback period")
+    severity_enhancement_threshold: int = Field(default=5, description="Event count threshold for severity enhancement")
     
     # Alerting
     alert_dedup_window_minutes: int = Field(default=10, description="Alert deduplication window")

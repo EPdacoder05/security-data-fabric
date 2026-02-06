@@ -21,10 +21,6 @@ from src.config.settings import settings
 logger = logging.getLogger(__name__)
 
 
-# Constants for enrichment logic
-REPEATED_ISSUE_THRESHOLD = 5  # Number of events within time window to trigger severity upgrade
-
-
 @dataclass
 class EnrichmentStats:
     """Statistics for enrichment operations."""
@@ -387,7 +383,8 @@ class EventEnricher:
         # Upgrade severity for repeated issues
         if event.metadata and "recent_events" in event.metadata:
             recent = event.metadata["recent_events"]
-            if recent.get("count", 0) >= REPEATED_ISSUE_THRESHOLD:
+            threshold = settings.severity_enhancement_threshold
+            if recent.get("count", 0) >= threshold:
                 if event.severity == EventSeverity.INFO:
                     event.severity = EventSeverity.WARNING
                 elif event.severity == EventSeverity.WARNING:
