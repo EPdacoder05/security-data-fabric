@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "security-data-fabric"
+version = "0.1.0"
+description = "Security Data Fabric — unified security data platform with pgvector, ML anomaly detection, and predictive analytics"
+authors = ["Security Team"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.25"}
+asyncpg = "^0.29.0"
+pgvector = "^0.2.4"
+redis = "^5.0.1"
+httpx = "^0.26.0"
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+python-dotenv = "^1.0.0"
+numpy = "^1.26.3"
+scikit-learn = "^1.4.0"
+pandas = "^2.1.4"
+sentence-transformers = "^2.3.1"
+alembic = "^1.13.1"
+python-json-logger = "^2.0.7"
+tenacity = "^8.2.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+pytest-asyncio = "^0.23.3"
+pytest-cov = "^4.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100
