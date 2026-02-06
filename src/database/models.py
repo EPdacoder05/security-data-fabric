@@ -40,7 +40,12 @@ class RawEvent(Base):
 
 
 class NormalizedEvent(Base):
-    """Silver layer: Normalized and cleaned events."""
+    """Silver layer: Normalized and cleaned events.
+    
+    Note: The 'metadata' JSON field is stored in the database as 'event_metadata'
+    to avoid conflicts with SQLAlchemy's reserved 'metadata' attribute. The Column
+    key parameter maps the database column to the 'metadata' Python attribute.
+    """
 
     __tablename__ = "normalized_events"
 

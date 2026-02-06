@@ -1,6 +1,6 @@
 """Semantic search service for natural language queries."""
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import numpy as np
 from sqlalchemy import select
@@ -144,7 +144,7 @@ class SemanticSearch:
 
         # Build search results with ranking
         results = []
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         for enriched_event, normalized_event in rows:
             similarity_score = similarity_map[enriched_event.id]
@@ -274,7 +274,7 @@ class SemanticSearch:
             )
 
             # Calculate time threshold
-            time_threshold = datetime.utcnow() - timedelta(hours=hours)
+            time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
 
             # Build query
             query = (

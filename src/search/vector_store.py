@@ -233,8 +233,8 @@ class VectorStore:
         if not filters:
             return query
 
-        # Determine if we need to join NormalizedEvent
-        needs_join = any(key in filters for key in self.NORMALIZED_EVENT_FILTER_KEYS)
+        # Determine if we need to join NormalizedEvent using set intersection
+        needs_join = bool(filters.keys() & self.NORMALIZED_EVENT_FILTER_KEYS)
         
         if needs_join:
             from src.database.models import NormalizedEvent
