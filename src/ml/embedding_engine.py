@@ -1,6 +1,6 @@
 """Text embedding engine for semantic search using sentence transformers."""
 import hashlib
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 import numpy as np
 
 from src.config import settings
@@ -269,7 +269,7 @@ class EmbeddingEngine:
         candidate_embeddings: List[np.ndarray],
         top_k: int = 10,
         min_similarity: float = 0.5,
-    ) -> List[tuple[int, float]]:
+    ) -> List[Tuple[int, float]]:
         """Find most similar embeddings to a query.
 
         Args:
