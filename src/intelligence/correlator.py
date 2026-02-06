@@ -264,10 +264,10 @@ class EventCorrelator:
         if event2.event_type not in degradation_types:
             return None
 
-        # For metrics, check if showing degradation
+        # For metrics, check if showing degradation (significant anomaly)
         if event2.event_type == "metric":
             z_score = event2.metadata.get("z_score", 0)
-            if z_score < 2.0:  # Only negative spikes indicate degradation
+            if abs(z_score) < 2.0:  # Only significant spikes indicate degradation
                 return None
 
         # Check for service/repository match
