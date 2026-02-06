@@ -1,5 +1,5 @@
 """Health check endpoints."""
-from datetime import datetime
+from datetime import datetime, UTC
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -36,7 +36,7 @@ async def health_check() -> HealthResponse:
     Returns:
         Health status
     """
-    return HealthResponse(status="healthy", timestamp=datetime.utcnow())
+    return HealthResponse(status="healthy", timestamp=datetime.now(UTC))
 
 
 @router.get("/ready", response_model=ReadinessResponse, status_code=status.HTTP_200_OK)
@@ -66,6 +66,6 @@ async def readiness_check(db: AsyncSession = Depends(get_db)) -> ReadinessRespon
     
     return ReadinessResponse(
         status=overall_status,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         checks=checks,
     )

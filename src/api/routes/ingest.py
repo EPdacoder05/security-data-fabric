@@ -1,6 +1,6 @@
 """Data ingestion endpoints."""
 from typing import Any, Dict
-from datetime import datetime
+from datetime import datetime, UTC
 from fastapi import APIRouter, Depends, HTTPException, Request, status, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,7 +66,7 @@ async def ingest_event(
         source=source,
         source_id=request.source_id,
         raw_data=request.data,
-        ingested_at=datetime.utcnow(),
+        ingested_at=datetime.now(UTC),
         processed=False,
     )
     
@@ -148,12 +148,12 @@ async def github_webhook(
         # Create raw event
         raw_event = models.RawEvent(
             source="github",
-            source_id=f"{x_github_event}_{payload.get('repository', {}).get('id', 'unknown')}_{datetime.utcnow().timestamp()}",
+            source_id=f"{x_github_event}_{payload.get('repository', {}).get('id', 'unknown')}_{datetime.now(UTC).timestamp()}",
             raw_data={
                 "event_type": x_github_event,
                 "payload": payload,
             },
-            ingested_at=datetime.utcnow(),
+            ingested_at=datetime.now(UTC),
             processed=False,
         )
         

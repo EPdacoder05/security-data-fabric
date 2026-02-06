@@ -98,7 +98,7 @@ async def get_dashboard_overview(
     """
     logger.info("Fetching dashboard overview")
     
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday_start = today_start - timedelta(days=1)
     

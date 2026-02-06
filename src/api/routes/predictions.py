@@ -1,6 +1,6 @@
 """Prediction query endpoints."""
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
@@ -81,7 +81,7 @@ async def get_active_predictions(
     query = select(models.Prediction).where(
         and_(
             models.Prediction.resolved == False,
-            models.Prediction.expires_at > datetime.utcnow(),
+            models.Prediction.expires_at > datetime.now(UTC),
         )
     )
     
@@ -101,7 +101,7 @@ async def get_active_predictions(
     count_query = select(models.Prediction).where(
         and_(
             models.Prediction.resolved == False,
-            models.Prediction.expires_at > datetime.utcnow(),
+            models.Prediction.expires_at > datetime.now(UTC),
         )
     )
     if severity_min is not None:
@@ -170,7 +170,7 @@ async def get_prediction_history(
     )
     
     from datetime import timedelta
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
     
     # Build query
     query = select(models.Prediction).where(

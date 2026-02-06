@@ -99,7 +99,7 @@ async def list_incidents(
         },
     )
     
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
     
     # Build query
     query = select(models.IncidentTimeline).where(

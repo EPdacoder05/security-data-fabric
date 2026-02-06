@@ -3,7 +3,7 @@ import time
 import uuid
 from typing import Callable, Dict, Any
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -101,7 +101,7 @@ class RateLimiter:
 
     def is_allowed(self, key: str) -> bool:
         """Check if request is allowed based on rate limit."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cutoff = now - timedelta(minutes=1)
         
         # Clean old requests

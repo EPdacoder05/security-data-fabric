@@ -1,6 +1,6 @@
 """FastAPI dependency injection for authentication and database."""
 from typing import Optional, AsyncGenerator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
@@ -37,9 +37,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.jwt_expiration_minutes)
+        expire = datetime.now(UTC) + timedelta(minutes=settings.jwt_expiration_minutes)
     
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
@@ -179,7 +179,7 @@ class RateLimitDependency:
         # Use user_id or IP as key
         key = current_user.user_id if current_user else "anonymous"
         
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cutoff = now - timedelta(seconds=self.window_seconds)
         
         # Initialize or clean old requests
