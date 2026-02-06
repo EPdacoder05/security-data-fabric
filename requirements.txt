@@ -37,3 +37,4 @@ httpx==0.26.0
 # Utilities
 python-json-logger==2.0.7
 tenacity==8.2.3
+python-dateutil==2.8.2
