@@ -15,6 +15,9 @@ logger = get_logger(__name__)
 class VectorStore:
     """pgvector-based vector store for semantic search."""
 
+    # Filter keys that require NormalizedEvent join
+    NORMALIZED_EVENT_FILTER_KEYS = {"source", "severity", "time_range"}
+
     def __init__(self, dimension: int = 384) -> None:
         """Initialize vector store.
 
@@ -231,7 +234,7 @@ class VectorStore:
             return query
 
         # Determine if we need to join NormalizedEvent
-        needs_join = any(key in filters for key in ["source", "severity", "time_range"])
+        needs_join = any(key in filters for key in self.NORMALIZED_EVENT_FILTER_KEYS)
         
         if needs_join:
             from src.database.models import NormalizedEvent

@@ -23,7 +23,7 @@ class NormalizedEventSchema(BaseModel):
     severity: int = Field(..., ge=1, le=5, description="Severity level (1-5)")
     title: str = Field(..., max_length=500, description="Event title")
     description: Optional[str] = Field(None, description="Event description")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    event_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
     class Config:
         from_attributes = True
