@@ -183,35 +183,7 @@ class VectorStore:
             )
 
             # Apply filters if provided
-            if filters:
-                if "source" in filters:
-                    from src.database.models import NormalizedEvent
-                    query = query.join(
-                        NormalizedEvent,
-                        EnrichedEvent.normalized_event_id == NormalizedEvent.id,
-                    ).where(NormalizedEvent.source == filters["source"])
-
-                if "severity" in filters:
-                    from src.database.models import NormalizedEvent
-                    if "source" not in filters:  # Only join if not already joined
-                        query = query.join(
-                            NormalizedEvent,
-                            EnrichedEvent.normalized_event_id == NormalizedEvent.id,
-                        )
-                    query = query.where(NormalizedEvent.severity == filters["severity"])
-
-                if "time_range" in filters:
-                    from src.database.models import NormalizedEvent
-                    time_range = filters["time_range"]
-                    if "source" not in filters and "severity" not in filters:
-                        query = query.join(
-                            NormalizedEvent,
-                            EnrichedEvent.normalized_event_id == NormalizedEvent.id,
-                        )
-                    if "start" in time_range:
-                        query = query.where(NormalizedEvent.timestamp >= time_range["start"])
-                    if "end" in time_range:
-                        query = query.where(NormalizedEvent.timestamp <= time_range["end"])
+            query = self._apply_filters(query, filters)
 
             # Order by similarity and limit
             query = query.order_by(text("similarity DESC")).limit(limit)
@@ -244,6 +216,44 @@ class VectorStore:
             )
             metrics.increment("vector_store.search_errors")
             raise
+
+    def _apply_filters(self, query, filters: Optional[Dict[str, Any]]):
+        """Apply filters to query with proper joins.
+
+        Args:
+            query: SQLAlchemy query
+            filters: Optional filters (source, severity, time_range)
+
+        Returns:
+            Updated query with filters applied
+        """
+        if not filters:
+            return query
+
+        # Determine if we need to join NormalizedEvent
+        needs_join = any(key in filters for key in ["source", "severity", "time_range"])
+        
+        if needs_join:
+            from src.database.models import NormalizedEvent
+            query = query.join(
+                NormalizedEvent,
+                EnrichedEvent.normalized_event_id == NormalizedEvent.id,
+            )
+
+            if "source" in filters:
+                query = query.where(NormalizedEvent.source == filters["source"])
+
+            if "severity" in filters:
+                query = query.where(NormalizedEvent.severity == filters["severity"])
+
+            if "time_range" in filters:
+                time_range = filters["time_range"]
+                if "start" in time_range:
+                    query = query.where(NormalizedEvent.timestamp >= time_range["start"])
+                if "end" in time_range:
+                    query = query.where(NormalizedEvent.timestamp <= time_range["end"])
+
+        return query
 
     async def find_nearest_neighbors(
         self,

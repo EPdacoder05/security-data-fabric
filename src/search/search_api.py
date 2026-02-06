@@ -65,7 +65,7 @@ async def semantic_search(
             limit=search_query.limit,
             min_similarity=search_query.min_similarity,
             filters=search_query.filters,
-            boost_recent=search_query.filters.get("boost_recent", True),
+            boost_recent=search_query.boost_recent,
         )
 
         logger.info(

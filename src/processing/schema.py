@@ -119,6 +119,7 @@ class SearchQuery(BaseModel):
     query: str = Field(..., min_length=1, description="Search query text")
     limit: int = Field(default=10, ge=1, le=100, description="Maximum results")
     min_similarity: float = Field(default=0.5, ge=0, le=1, description="Minimum similarity score")
+    boost_recent: bool = Field(default=True, description="Boost recent events in ranking")
     filters: Dict[str, Any] = Field(default_factory=dict, description="Additional filters")
 
 
