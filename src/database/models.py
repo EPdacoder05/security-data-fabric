@@ -52,7 +52,7 @@ class NormalizedEvent(Base):
     severity = Column(Integer, nullable=False, index=True)  # 1-5 scale
     title = Column(String(500), nullable=False)
     description = Column(Text)
-    metadata = Column(JSON)
+    event_metadata = Column(JSON)
     content_hash = Column(String(64), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
