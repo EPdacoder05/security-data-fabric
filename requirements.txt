@@ -23,6 +23,7 @@ python-dotenv==1.0.0
 
 # Data Science & ML
 numpy==1.26.3
+scipy==1.11.4
 scikit-learn==1.4.0
 pandas==2.1.4
 sentence-transformers==2.3.1
