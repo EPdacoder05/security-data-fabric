@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sdf_postgres
+    environment:
+      POSTGRES_USER: sdf_user
+      POSTGRES_PASSWORD: sdf_password
+      POSTGRES_DB: sdf_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdf_user -d sdf_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sdf_network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: sdf_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sdf_network
+
+  # Security Data Fabric API
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sdf_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sdf_user:sdf_password@postgres:5432/sdf_db
+      REDIS_URL: redis://redis:6379/0
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      API_WORKERS: 4
+      LOG_LEVEL: INFO
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production}
+      # External integrations (optional - loaded from .env)
+      DYNATRACE_URL: ${DYNATRACE_URL:-}
+      DYNATRACE_API_TOKEN: ${DYNATRACE_API_TOKEN:-}
+      SPLUNK_URL: ${SPLUNK_URL:-}
+      SPLUNK_TOKEN: ${SPLUNK_TOKEN:-}
+      SERVICENOW_URL: ${SERVICENOW_URL:-}
+      SERVICENOW_USERNAME: ${SERVICENOW_USERNAME:-}
+      SERVICENOW_PASSWORD: ${SERVICENOW_PASSWORD:-}
+      PAGERDUTY_API_KEY: ${PAGERDUTY_API_KEY:-}
+      PAGERDUTY_INTEGRATION_KEY: ${PAGERDUTY_INTEGRATION_KEY:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+    networks:
+      - sdf_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  sdf_network:
+    driver: bridge
