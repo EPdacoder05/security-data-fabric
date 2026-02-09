@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "security-data-fabric"
+version = "1.0.0"
+description = "Unified Security Data Platform with Medallion Architecture, ML anomaly detection, and predictive analytics"
+authors = ["Security Team"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "0.109.1"
+uvicorn = {extras = ["standard"], version = "0.27.0"}
+sqlalchemy = {extras = ["asyncio"], version = "2.0.25"}
+asyncpg = "0.29.0"
+pgvector = "0.2.4"
+pydantic = "2.5.3"
+pydantic-settings = "2.1.0"
+redis = {extras = ["hiredis"], version = "5.0.1"}
+scikit-learn = "1.4.0"
+sentence-transformers = "2.3.1"
+httpx = "0.26.0"
+python-jose = {extras = ["cryptography"], version = "3.3.0"}
+cryptography = "42.0.0"
+azure-keyvault-secrets = "4.7.0"
+azure-identity = "1.15.0"
+prometheus-client = "0.19.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "7.4.4"
+pytest-asyncio = "0.23.3"
+pytest-cov = "4.1.0"
+black = "24.1.1"
+ruff = "0.1.14"
+mypy = "1.8.0"
+bandit = "1.7.6"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "B", "C4", "S"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=src --cov-report=html --cov-report=term-missing"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
