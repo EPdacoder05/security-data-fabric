@@ -1,10 +1,10 @@
 """SOC2 and ISO 27001 control verification."""
 import logging
-from typing import Dict, Any, List
-from enum import Enum
 from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import AuditLog, MFAToken, RefreshToken
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class SOC2Control(str, Enum):
     """SOC2 Trust Service Criteria controls."""
-    
+
     # CC6: Logical and Physical Access Controls
     CC6_1 = "cc6.1"  # Logical access security software
     CC6_2 = "cc6.2"  # Identification and authentication
@@ -22,7 +22,7 @@ class SOC2Control(str, Enum):
     CC6_6 = "cc6.6"  # Logical access violations
     CC6_7 = "cc6.7"  # Access removed when no longer needed
     CC6_8 = "cc6.8"  # Physical access controls
-    
+
     # CC7: System Operations
     CC7_1 = "cc7.1"  # Security incident detection
     CC7_2 = "cc7.2"  # Security incident response
@@ -33,7 +33,7 @@ class SOC2Control(str, Enum):
 
 class ISO27001Control(str, Enum):
     """ISO 27001 Annex A controls."""
-    
+
     A_9_2_1 = "a.9.2.1"  # User registration and de-registration
     A_9_2_2 = "a.9.2.2"  # User access provisioning
     A_9_4_2 = "a.9.4.2"  # Secure log-on procedures
@@ -45,7 +45,7 @@ class ISO27001Control(str, Enum):
 
 class ComplianceControlVerifier:
     """Verify SOC2 and ISO 27001 control implementation."""
-    
+
     async def verify_control(
         self,
         db: AsyncSession,
@@ -64,7 +64,7 @@ class ComplianceControlVerifier:
             return await self._verify_soc2_control(db, control)
         else:
             return await self._verify_iso27001_control(db, control)
-    
+
     async def _verify_soc2_control(
         self,
         db: AsyncSession,
@@ -74,30 +74,30 @@ class ComplianceControlVerifier:
         if control == SOC2Control.CC6_1:
             # Verify logical access security software (MFA, encryption)
             return await self._verify_cc6_1(db)
-        
+
         elif control == SOC2Control.CC6_2:
             # Verify identification and authentication (MFA)
             return await self._verify_cc6_2(db)
-        
+
         elif control == SOC2Control.CC6_7:
             # Verify access removed when no longer needed (token revocation)
             return await self._verify_cc6_7(db)
-        
+
         elif control == SOC2Control.CC7_1:
             # Verify security incident detection
             return await self._verify_cc7_1(db)
-        
+
         elif control == SOC2Control.CC7_5:
             # Verify security event logging
             return await self._verify_cc7_5(db)
-        
+
         else:
             return {
                 "control": control.value,
                 "status": "not_implemented",
                 "message": "Control verification not implemented"
             }
-    
+
     async def _verify_cc6_1(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC6.1: Logical access security software."""
         # Check MFA is enabled
@@ -105,13 +105,13 @@ class ComplianceControlVerifier:
             select(func.count()).select_from(MFAToken)
         )
         mfa_count = mfa_count_result.scalar() or 0
-        
+
         # Check encryption is configured
         from src.config import settings
         encryption_enabled = bool(settings.encryption_key)
-        
+
         compliant = mfa_count > 0 and encryption_enabled
-        
+
         return {
             "control": "CC6.1",
             "name": "Logical and Physical Access Controls - Security Software",
@@ -122,7 +122,7 @@ class ComplianceControlVerifier:
             },
             "verified_at": datetime.utcnow().isoformat()
         }
-    
+
     async def _verify_cc6_2(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC6.2: Identification and authentication."""
         # Check MFA adoption
@@ -130,16 +130,16 @@ class ComplianceControlVerifier:
             select(func.count(func.distinct(MFAToken.user_id)))
         )
         total_users = total_users_result.scalar() or 0
-        
+
         verified_users_result = await db.execute(
             select(func.count(func.distinct(MFAToken.user_id)))
             .where(MFAToken.verified == True)  # noqa: E712
         )
         verified_users = verified_users_result.scalar() or 0
-        
+
         adoption_rate = verified_users / total_users if total_users > 0 else 0
         compliant = adoption_rate >= 0.95  # 95% target
-        
+
         return {
             "control": "CC6.2",
             "name": "Logical and Physical Access Controls - Authentication",
@@ -151,7 +151,7 @@ class ComplianceControlVerifier:
             },
             "verified_at": datetime.utcnow().isoformat()
         }
-    
+
     async def _verify_cc6_7(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC6.7: Access removed when no longer needed."""
         # Check for revoked tokens
@@ -161,7 +161,7 @@ class ComplianceControlVerifier:
             .where(RefreshToken.revoked == True)  # noqa: E712
         )
         revoked_count = revoked_tokens_result.scalar() or 0
-        
+
         # Check revocation audit logs
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         revocation_logs_result = await db.execute(
@@ -171,9 +171,9 @@ class ComplianceControlVerifier:
             .where(AuditLog.timestamp >= thirty_days_ago)
         )
         revocation_logs = revocation_logs_result.scalar() or 0
-        
+
         compliant = revoked_count > 0 or revocation_logs > 0
-        
+
         return {
             "control": "CC6.7",
             "name": "Logical and Physical Access Controls - Access Removal",
@@ -184,7 +184,7 @@ class ComplianceControlVerifier:
             },
             "verified_at": datetime.utcnow().isoformat()
         }
-    
+
     async def _verify_cc7_1(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC7.1: Security incident detection."""
         # Check anomaly detection logs
@@ -196,9 +196,9 @@ class ComplianceControlVerifier:
             .where(AuditLog.timestamp >= thirty_days_ago)
         )
         detections = detection_logs_result.scalar() or 0
-        
+
         compliant = True  # System is operational
-        
+
         return {
             "control": "CC7.1",
             "name": "System Operations - Security Incident Detection",
@@ -209,12 +209,12 @@ class ComplianceControlVerifier:
             },
             "verified_at": datetime.utcnow().isoformat()
         }
-    
+
     async def _verify_cc7_5(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC7.5: Security event logging."""
         # Check audit log coverage
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-        
+
         # Count different types of logged events
         event_counts = {}
         for action in ['CREATE', 'READ', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT']:
@@ -225,10 +225,10 @@ class ComplianceControlVerifier:
                 .where(AuditLog.timestamp >= thirty_days_ago)
             )
             event_counts[action] = result.scalar() or 0
-        
+
         total_events = sum(event_counts.values())
         compliant = total_events > 0
-        
+
         return {
             "control": "CC7.5",
             "name": "System Operations - Security Event Logging",
@@ -239,7 +239,7 @@ class ComplianceControlVerifier:
             },
             "verified_at": datetime.utcnow().isoformat()
         }
-    
+
     async def _verify_iso27001_control(
         self,
         db: AsyncSession,
@@ -249,18 +249,18 @@ class ComplianceControlVerifier:
         if control == ISO27001Control.A_9_4_2:
             # Secure log-on procedures (MFA)
             return await self._verify_cc6_2(db)  # Same as SOC2 CC6.2
-        
+
         elif control == ISO27001Control.A_12_4_1:
             # Event logging
             return await self._verify_cc7_5(db)  # Same as SOC2 CC7.5
-        
+
         else:
             return {
                 "control": control.value,
                 "status": "not_implemented",
                 "message": "Control verification not implemented"
             }
-    
+
     async def verify_all_controls(
         self,
         db: AsyncSession
@@ -277,14 +277,14 @@ class ComplianceControlVerifier:
             SOC2Control.CC7_1,
             SOC2Control.CC7_5
         ]
-        
+
         results = []
         for control in soc2_controls:
             result = await self.verify_control(db, control)
             results.append(result)
-        
+
         compliant_count = sum(1 for r in results if r['status'] == 'compliant')
-        
+
         return {
             "total_controls": len(results),
             "compliant_controls": compliant_count,

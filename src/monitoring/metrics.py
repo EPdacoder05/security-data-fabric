@@ -1,16 +1,10 @@
 """Prometheus metrics for monitoring application performance."""
 import logging
-from typing import Callable
-from functools import wraps
 import time
+from functools import wraps
+from typing import Callable
 
-from prometheus_client import (
-    Counter,
-    Histogram,
-    Gauge,
-    generate_latest,
-    CONTENT_TYPE_LATEST
-)
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 
 logger = logging.getLogger(__name__)
 
@@ -205,39 +199,39 @@ def track_http_request(method: str, endpoint: str) -> Callable:
         async def wrapper(*args, **kwargs):
             http_requests_in_progress.labels(method=method, endpoint=endpoint).inc()
             start_time = time.perf_counter()
-            
+
             try:
                 result = await func(*args, **kwargs)
                 status = getattr(result, 'status_code', 200)
-                
+
                 http_requests_total.labels(
                     method=method,
                     endpoint=endpoint,
                     status=status
                 ).inc()
-                
+
                 return result
-                
-            except Exception as e:
+
+            except Exception:
                 http_requests_total.labels(
                     method=method,
                     endpoint=endpoint,
                     status=500
                 ).inc()
                 raise
-                
+
             finally:
                 duration = time.perf_counter() - start_time
                 http_request_duration_seconds.labels(
                     method=method,
                     endpoint=endpoint
                 ).observe(duration)
-                
+
                 http_requests_in_progress.labels(
                     method=method,
                     endpoint=endpoint
                 ).dec()
-        
+
         return wrapper
     return decorator
 
@@ -254,26 +248,26 @@ def track_cache_operation(operation: str, cache_type: str = "redis") -> Callable
         @wraps(func)
         async def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
-            
+
             try:
                 result = await func(*args, **kwargs)
-                
+
                 # Track hit/miss
                 if operation == "get":
                     if result is not None:
                         cache_hits_total.labels(cache_type=cache_type).inc()
                     else:
                         cache_misses_total.labels(cache_type=cache_type).inc()
-                
+
                 return result
-                
+
             finally:
                 duration = time.perf_counter() - start_time
                 cache_operations_duration_seconds.labels(
                     operation=operation,
                     cache_type=cache_type
                 ).observe(duration)
-        
+
         return wrapper
     return decorator
 
@@ -290,30 +284,30 @@ def track_db_query(query_type: str) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
-            
+
             try:
                 result = await func(*args, **kwargs)
-                
+
                 db_queries_total.labels(
                     query_type=query_type,
                     status="success"
                 ).inc()
-                
+
                 return result
-                
-            except Exception as e:
+
+            except Exception:
                 db_queries_total.labels(
                     query_type=query_type,
                     status="error"
                 ).inc()
                 raise
-                
+
             finally:
                 duration = time.perf_counter() - start_time
                 db_query_duration_seconds.labels(
                     query_type=query_type
                 ).observe(duration)
-        
+
         return wrapper
     return decorator
 
@@ -330,14 +324,14 @@ def track_ml_prediction(model_type: str) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
             start_time = time.perf_counter()
-            
+
             try:
                 result = await func(*args, **kwargs)
-                
+
                 ml_predictions_total.labels(model_type=model_type).inc()
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = type(e).__name__
                 ml_prediction_errors_total.labels(
@@ -345,13 +339,13 @@ def track_ml_prediction(model_type: str) -> Callable:
                     error_type=error_type
                 ).inc()
                 raise
-                
+
             finally:
                 duration = time.perf_counter() - start_time
                 ml_prediction_duration_seconds.labels(
                     model_type=model_type
                 ).observe(duration)
-        
+
         return wrapper
     return decorator
 

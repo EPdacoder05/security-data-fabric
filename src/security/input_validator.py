@@ -1,8 +1,8 @@
 """Input validation with 32 attack pattern detection (SQL, XSS, LDAP, Path Traversal, etc.)."""
-import re
 import logging
-from typing import List, Tuple, Optional
+import re
 from enum import Enum
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class AttackType(str, Enum):
 
 class InputValidator:
     """Validate and sanitize user input to prevent injection attacks."""
-    
+
     # 26 SQL Injection Patterns
     SQL_PATTERNS = [
         r"(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)",
@@ -51,7 +51,7 @@ class InputValidator:
         r"(CONVERT\s*\()",
         r"(SUBSTRING\s*\()"
     ]
-    
+
     # 10 XSS (Cross-Site Scripting) Patterns
     XSS_PATTERNS = [
         r"(<script[^>]*>.*?</script>)",
@@ -65,7 +65,7 @@ class InputValidator:
         r"(<object[^>]*>)",
         r"(data:text/html)"
     ]
-    
+
     # LDAP Injection Patterns
     LDAP_PATTERNS = [
         r"(\*\s*\))",
@@ -74,7 +74,7 @@ class InputValidator:
         r"(\(\s*\|)",
         r"(\(\s*&)"
     ]
-    
+
     # Path Traversal Patterns
     PATH_TRAVERSAL_PATTERNS = [
         r"(\.\./|\.\.\\)",
@@ -84,7 +84,7 @@ class InputValidator:
         r"(c:\\windows)",
         r"(/proc/self)"
     ]
-    
+
     # Command Injection Patterns
     COMMAND_INJECTION_PATTERNS = [
         r"(;|\||&|\$\(|\`)",
@@ -95,7 +95,7 @@ class InputValidator:
         r"(\bphp\b.*-r)",
         r"(/bin/(bash|sh|zsh))"
     ]
-    
+
     # SSRF (Server-Side Request Forgery) Patterns
     SSRF_PATTERNS = [
         r"(localhost|127\.0\.0\.1|0\.0\.0\.0)",
@@ -103,7 +103,7 @@ class InputValidator:
         r"(::1)",  # IPv6 localhost
         r"(file://|gopher://|dict://)"
     ]
-    
+
     # XXE (XML External Entity) Patterns
     XXE_PATTERNS = [
         r"(<!ENTITY)",
@@ -111,7 +111,7 @@ class InputValidator:
         r"(SYSTEM\s+[\"'])",
         r"(PUBLIC\s+[\"'])"
     ]
-    
+
     # ReDoS (Regular Expression Denial of Service) Patterns
     REDOS_PATTERNS = [
         r"(.+\*)+",
@@ -119,11 +119,11 @@ class InputValidator:
         r"(.+)+",
         r"(\w+\*)+\w"
     ]
-    
+
     def __init__(self) -> None:
         """Initialize input validator."""
         self._compile_patterns()
-    
+
     def _compile_patterns(self) -> None:
         """Compile regex patterns for performance."""
         self.sql_regexes = [re.compile(p, re.IGNORECASE) for p in self.SQL_PATTERNS]
@@ -134,7 +134,7 @@ class InputValidator:
         self.ssrf_regexes = [re.compile(p, re.IGNORECASE) for p in self.SSRF_PATTERNS]
         self.xxe_regexes = [re.compile(p, re.IGNORECASE) for p in self.XXE_PATTERNS]
         self.redos_regexes = [re.compile(p, re.IGNORECASE) for p in self.REDOS_PATTERNS]
-    
+
     def validate(self, input_str: str, check_types: Optional[List[AttackType]] = None) -> Tuple[bool, List[str]]:
         """Validate input against attack patterns.
         
@@ -147,12 +147,12 @@ class InputValidator:
         """
         if not input_str:
             return True, []
-        
+
         detected_attacks = []
-        
+
         if check_types is None:
             check_types = list(AttackType)
-        
+
         # Check SQL Injection
         if AttackType.SQL_INJECTION in check_types:
             for regex in self.sql_regexes:
@@ -160,7 +160,7 @@ class InputValidator:
                     detected_attacks.append(f"SQL Injection: {regex.pattern}")
                     logger.warning("SQL injection detected: pattern=%s, input=%s", regex.pattern, input_str[:100])
                     break
-        
+
         # Check XSS
         if AttackType.XSS in check_types:
             for regex in self.xss_regexes:
@@ -168,7 +168,7 @@ class InputValidator:
                     detected_attacks.append(f"XSS: {regex.pattern}")
                     logger.warning("XSS detected: pattern=%s, input=%s", regex.pattern, input_str[:100])
                     break
-        
+
         # Check LDAP Injection
         if AttackType.LDAP_INJECTION in check_types:
             for regex in self.ldap_regexes:
@@ -176,7 +176,7 @@ class InputValidator:
                     detected_attacks.append(f"LDAP Injection: {regex.pattern}")
                     logger.warning("LDAP injection detected: pattern=%s", regex.pattern)
                     break
-        
+
         # Check Path Traversal
         if AttackType.PATH_TRAVERSAL in check_types:
             for regex in self.path_traversal_regexes:
@@ -184,7 +184,7 @@ class InputValidator:
                     detected_attacks.append(f"Path Traversal: {regex.pattern}")
                     logger.warning("Path traversal detected: pattern=%s", regex.pattern)
                     break
-        
+
         # Check Command Injection
         if AttackType.COMMAND_INJECTION in check_types:
             for regex in self.command_injection_regexes:
@@ -192,7 +192,7 @@ class InputValidator:
                     detected_attacks.append(f"Command Injection: {regex.pattern}")
                     logger.warning("Command injection detected: pattern=%s", regex.pattern)
                     break
-        
+
         # Check SSRF
         if AttackType.SSRF in check_types:
             for regex in self.ssrf_regexes:
@@ -200,7 +200,7 @@ class InputValidator:
                     detected_attacks.append(f"SSRF: {regex.pattern}")
                     logger.warning("SSRF detected: pattern=%s", regex.pattern)
                     break
-        
+
         # Check XXE
         if AttackType.XXE in check_types:
             for regex in self.xxe_regexes:
@@ -208,7 +208,7 @@ class InputValidator:
                     detected_attacks.append(f"XXE: {regex.pattern}")
                     logger.warning("XXE detected: pattern=%s", regex.pattern)
                     break
-        
+
         # Check ReDoS
         if AttackType.REDOS in check_types:
             for regex in self.redos_regexes:
@@ -220,11 +220,11 @@ class InputValidator:
                 except:
                     # Pattern itself might cause ReDoS
                     pass
-        
+
         is_safe = len(detected_attacks) == 0
-        
+
         return is_safe, detected_attacks
-    
+
     def sanitize_sql(self, input_str: str) -> str:
         """Sanitize input for SQL queries.
         
@@ -236,13 +236,13 @@ class InputValidator:
         """
         # Escape single quotes
         sanitized = input_str.replace("'", "''")
-        
+
         # Remove SQL keywords
         for pattern in ["--", "/*", "*/", ";", "xp_", "sp_"]:
             sanitized = sanitized.replace(pattern, "")
-        
+
         return sanitized
-    
+
     def sanitize_html(self, input_str: str) -> str:
         """Sanitize input for HTML output (prevent XSS).
         
@@ -254,7 +254,7 @@ class InputValidator:
         """
         import html
         return html.escape(input_str)
-    
+
     def sanitize_filename(self, filename: str) -> str:
         """Sanitize filename to prevent path traversal.
         
@@ -267,12 +267,12 @@ class InputValidator:
         # Remove path components
         filename = filename.replace("../", "").replace("..\\", "")
         filename = filename.replace("/", "").replace("\\", "")
-        
+
         # Remove dangerous characters
         filename = re.sub(r'[<>:"|?*]', '', filename)
-        
+
         return filename
-    
+
     def validate_email(self, email: str) -> bool:
         """Validate email address format.
         
@@ -284,7 +284,7 @@ class InputValidator:
         """
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return bool(re.match(pattern, email))
-    
+
     def validate_url(self, url: str) -> bool:
         """Validate URL format and check for SSRF.
         
@@ -298,11 +298,11 @@ class InputValidator:
         is_safe, _ = self.validate(url, [AttackType.SSRF])
         if not is_safe:
             return False
-        
+
         # Check basic URL format
         pattern = r'^https?://'
         return bool(re.match(pattern, url))
-    
+
     def count_total_patterns(self) -> int:
         """Count total number of attack patterns.
         

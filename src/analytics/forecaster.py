@@ -1,15 +1,15 @@
 """ML-based incident trend forecasting with Random Forest."""
 import logging
-import time
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
 import pickle
+import time
+from datetime import timedelta
+from typing import Any, Dict, List, Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 
 from src.security.redis_cache import cached
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class IncidentForecaster:
     """ML-based incident forecasting using Random Forest."""
-    
+
     def __init__(self, n_estimators: int = 100, random_state: int = 42) -> None:
         """Initialize forecaster.
         
@@ -37,7 +37,7 @@ class IncidentForecaster:
         self.is_trained = False
         self.feature_importance: Optional[Dict[str, float]] = None
         self.model_metrics: Optional[Dict[str, float]] = None
-    
+
     def _engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Engineer 9 features for ML model.
         
@@ -56,29 +56,29 @@ class IncidentForecaster:
         """
         # Ensure sorted by timestamp
         df = df.sort_values('timestamp').copy()
-        
+
         # Extract time-based features
         df['day_of_week'] = df['timestamp'].dt.dayofweek
         df['month'] = df['timestamp'].dt.month
-        
+
         # Lag features (previous values)
         df['lag_1'] = df['incident_count'].shift(1)
         df['lag_7'] = df['incident_count'].shift(7)
         df['lag_30'] = df['incident_count'].shift(30)
-        
+
         # Rolling average features
         df['rolling_avg_7'] = df['incident_count'].rolling(window=7, min_periods=1).mean()
         df['rolling_avg_14'] = df['incident_count'].rolling(window=14, min_periods=1).mean()
         df['rolling_avg_30'] = df['incident_count'].rolling(window=30, min_periods=1).mean()
-        
+
         # Trend feature (days since start)
         df['trend'] = (df['timestamp'] - df['timestamp'].min()).dt.days
-        
+
         # Fill NaN values from lag features
         df = df.fillna(method='bfill').fillna(0)
-        
+
         return df
-    
+
     def train(
         self,
         historical_data: List[Dict[str, Any]],
@@ -102,14 +102,14 @@ class IncidentForecaster:
             metrics = forecaster.train(data)
         """
         start_time = time.perf_counter()
-        
+
         # Convert to DataFrame
         df = pd.DataFrame(historical_data)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
-        
+
         # Engineer features
         df = self._engineer_features(df)
-        
+
         # Prepare features and target
         feature_cols = [
             'day_of_week', 'month',
@@ -117,29 +117,29 @@ class IncidentForecaster:
             'rolling_avg_7', 'rolling_avg_14', 'rolling_avg_30',
             'trend'
         ]
-        
+
         X = df[feature_cols].values
         y = df['incident_count'].values
-        
+
         # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=test_size, shuffle=False  # Don't shuffle time series
         )
-        
+
         # Train model
         self.model.fit(X_train, y_train)
         self.is_trained = True
-        
+
         # Evaluate on test set
         y_pred = self.model.predict(X_test)
-        
+
         mse = mean_squared_error(y_test, y_pred)
         rmse = np.sqrt(mse)
         r2 = r2_score(y_test, y_pred)
-        
+
         # Store feature importance
         self.feature_importance = dict(zip(feature_cols, self.model.feature_importances_))
-        
+
         # Store metrics
         self.model_metrics = {
             "mse": float(mse),
@@ -148,9 +148,9 @@ class IncidentForecaster:
             "training_samples": len(X_train),
             "test_samples": len(X_test)
         }
-        
+
         duration = (time.perf_counter() - start_time) * 1000
-        
+
         logger.info(
             "Model trained: samples=%d, r2=%.4f, rmse=%.2f, duration=%.2fms",
             len(X),
@@ -158,9 +158,9 @@ class IncidentForecaster:
             rmse,
             duration
         )
-        
+
         return self.model_metrics
-    
+
     @cached(ttl=3600, namespace="forecast")
     async def predict(
         self,
@@ -181,25 +181,25 @@ class IncidentForecaster:
         Performance: <500ms prediction requirement
         """
         start_time = time.perf_counter()
-        
+
         if not self.is_trained:
             raise ValueError("Model not trained. Call train() first.")
-        
+
         # Convert to DataFrame
         df = pd.DataFrame(historical_data)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = self._engineer_features(df)
-        
+
         # Generate future dates
         last_date = df['timestamp'].max()
         future_dates = [last_date + timedelta(days=i+1) for i in range(days_ahead)]
-        
+
         predictions = []
-        
+
         for future_date in future_dates:
             # Get most recent data for lag features
             recent_df = df.tail(30).copy()
-            
+
             # Create feature vector for prediction
             features = {
                 'day_of_week': future_date.dayofweek,
@@ -212,20 +212,20 @@ class IncidentForecaster:
                 'rolling_avg_30': recent_df['incident_count'].tail(30).mean(),
                 'trend': (future_date - df['timestamp'].min()).days
             }
-            
+
             X = np.array([list(features.values())])
-            
+
             # Predict
             prediction = self.model.predict(X)[0]
-            
+
             # Calculate confidence interval using ensemble predictions
             tree_predictions = np.array([tree.predict(X)[0] for tree in self.model.estimators_])
             std = np.std(tree_predictions)
-            
+
             # Z-score for confidence level (1.96 for 95%)
             z_score = 1.96 if confidence_level == 0.95 else 2.576  # 99%
             margin = z_score * std
-            
+
             predictions.append({
                 "date": future_date.isoformat(),
                 "predicted_count": max(0, int(prediction)),  # Can't be negative
@@ -233,7 +233,7 @@ class IncidentForecaster:
                 "confidence_upper": int(prediction + margin),
                 "confidence_level": confidence_level
             })
-            
+
             # Add prediction to DataFrame for next iteration
             new_row = pd.DataFrame([{
                 'timestamp': future_date,
@@ -241,50 +241,50 @@ class IncidentForecaster:
                 **features
             }])
             df = pd.concat([df, new_row], ignore_index=True)
-        
+
         duration = (time.perf_counter() - start_time) * 1000
-        
+
         logger.info(
             "Forecast generated: days=%d, duration=%.2fms",
             days_ahead,
             duration
         )
-        
+
         # Verify performance target
         if duration > 500:
             logger.warning("Forecast exceeded 500ms target: %.2fms", duration)
-        
+
         return {
             "forecast": predictions,
             "model_metrics": self.model_metrics,
             "feature_importance": self.feature_importance,
             "prediction_time_ms": duration
         }
-    
+
     def save_model(self, filepath: str) -> None:
         """Save trained model to disk."""
         if not self.is_trained:
             raise ValueError("Cannot save untrained model")
-        
+
         with open(filepath, 'wb') as f:
             pickle.dump({
                 'model': self.model,
                 'feature_importance': self.feature_importance,
                 'model_metrics': self.model_metrics
             }, f)
-        
+
         logger.info("Model saved to %s", filepath)
-    
+
     def load_model(self, filepath: str) -> None:
         """Load trained model from disk."""
         with open(filepath, 'rb') as f:
             data = pickle.load(f)
-        
+
         self.model = data['model']
         self.feature_importance = data['feature_importance']
         self.model_metrics = data['model_metrics']
         self.is_trained = True
-        
+
         logger.info("Model loaded from %s", filepath)
 
 

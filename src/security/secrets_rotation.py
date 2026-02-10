@@ -1,16 +1,14 @@
 """Automated secrets rotation on 90-day schedule."""
 import logging
-from typing import Dict, Any, List, Optional
+import secrets
+import uuid
 from datetime import datetime, timedelta
 from enum import Enum
-import secrets
-import hashlib
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Column, String, DateTime, Boolean, Integer
+from sqlalchemy import Boolean, Column, DateTime, String, select
 from sqlalchemy.dialects.postgresql import UUID
-import uuid
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import Base
 from src.security.secrets_manager import get_secrets_manager
@@ -30,9 +28,9 @@ class SecretType(str, Enum):
 
 class SecretRotationLog(Base):
     """Track secret rotation history."""
-    
+
     __tablename__ = "secret_rotation_logs"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     secret_type = Column(String(100), nullable=False, index=True)
     rotated_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -44,10 +42,10 @@ class SecretRotationLog(Base):
 
 class SecretsRotation:
     """Manage 90-day secret rotation schedule."""
-    
+
     ROTATION_INTERVAL_DAYS = 90
     WARNING_DAYS_BEFORE = 14  # Warn 2 weeks before expiry
-    
+
     async def _generate_secure_secret(self, secret_type: SecretType) -> str:
         """Generate a cryptographically secure secret.
         
@@ -60,20 +58,20 @@ class SecretsRotation:
         if secret_type == SecretType.DATABASE_PASSWORD:
             # 32-character password with special chars
             return secrets.token_urlsafe(32)
-        
+
         elif secret_type == SecretType.JWT_SIGNING_KEY:
             # 64-byte key for HS256
             return secrets.token_urlsafe(64)
-        
+
         elif secret_type == SecretType.ENCRYPTION_KEY:
             # 32-byte key for AES-256
             key_bytes = secrets.token_bytes(32)
             return key_bytes.hex()
-        
+
         else:
             # Default: 32-byte token
             return secrets.token_urlsafe(32)
-    
+
     async def rotate_secret(
         self,
         db: AsyncSession,
@@ -93,53 +91,53 @@ class SecretsRotation:
             Rotation result
         """
         logger.info("Starting secret rotation: type=%s, manual=%s", secret_type.value, manual)
-        
+
         try:
             # Generate or use custom secret
             new_secret = custom_value or await self._generate_secure_secret(secret_type)
-            
+
             # Update in Key Vault
             secrets_manager = get_secrets_manager()
             secret_name = self._get_secret_name(secret_type)
-            
+
             if secrets_manager.is_key_vault_available():
                 success = secrets_manager.set_secret(secret_name, new_secret)
                 if not success:
                     raise Exception("Failed to update secret in Key Vault")
             else:
                 logger.warning("Key Vault unavailable, secret not persisted")
-            
+
             # Log rotation
             next_rotation = datetime.utcnow() + timedelta(days=self.ROTATION_INTERVAL_DAYS)
-            
+
             rotation_log = SecretRotationLog(
                 secret_type=secret_type.value,
                 rotated_at=datetime.utcnow(),
                 next_rotation_due=next_rotation,
                 rotation_successful=True,
                 rotation_method="manual" if manual else "automatic",
-                notes=f"Secret rotated successfully"
+                notes="Secret rotated successfully"
             )
-            
+
             db.add(rotation_log)
             await db.commit()
-            
+
             logger.info(
                 "Secret rotated successfully: type=%s, next_due=%s",
                 secret_type.value,
                 next_rotation.isoformat()
             )
-            
+
             return {
                 "secret_type": secret_type.value,
                 "rotated_at": rotation_log.rotated_at.isoformat(),
                 "next_rotation_due": next_rotation.isoformat(),
                 "success": True
             }
-            
+
         except Exception as e:
             logger.error("Secret rotation failed: type=%s, error=%s", secret_type.value, str(e))
-            
+
             # Log failed rotation
             rotation_log = SecretRotationLog(
                 secret_type=secret_type.value,
@@ -149,16 +147,16 @@ class SecretsRotation:
                 rotation_method="manual" if manual else "automatic",
                 notes=f"Rotation failed: {str(e)}"
             )
-            
+
             db.add(rotation_log)
             await db.commit()
-            
+
             return {
                 "secret_type": secret_type.value,
                 "success": False,
                 "error": str(e)
             }
-    
+
     def _get_secret_name(self, secret_type: SecretType) -> str:
         """Get Key Vault secret name for a secret type."""
         mapping = {
@@ -170,7 +168,7 @@ class SecretsRotation:
             SecretType.SERVICE_API_KEY: "service-api-key"
         }
         return mapping.get(secret_type, secret_type.value)
-    
+
     async def check_rotation_due(
         self,
         db: AsyncSession
@@ -184,7 +182,7 @@ class SecretsRotation:
             List of secrets that need rotation
         """
         due_secrets = []
-        
+
         for secret_type in SecretType:
             # Get last rotation
             result = await db.execute(
@@ -195,7 +193,7 @@ class SecretsRotation:
                 .limit(1)
             )
             last_rotation = result.scalar_one_or_none()
-            
+
             if not last_rotation:
                 # Never rotated
                 due_secrets.append({
@@ -205,11 +203,11 @@ class SecretsRotation:
                     "next_rotation_due": None
                 })
                 continue
-            
+
             # Check if due
             now = datetime.utcnow()
             days_until_due = (last_rotation.next_rotation_due - now).days
-            
+
             if days_until_due <= 0:
                 due_secrets.append({
                     "secret_type": secret_type.value,
@@ -226,9 +224,9 @@ class SecretsRotation:
                     "last_rotated": last_rotation.rotated_at.isoformat(),
                     "next_rotation_due": last_rotation.next_rotation_due.isoformat()
                 })
-        
+
         return due_secrets
-    
+
     async def rotate_all_due_secrets(self, db: AsyncSession) -> Dict[str, Any]:
         """Automatically rotate all secrets that are due.
         
@@ -240,29 +238,29 @@ class SecretsRotation:
         """
         due_secrets = await self.check_rotation_due(db)
         overdue = [s for s in due_secrets if s['status'] == 'overdue']
-        
+
         results = []
-        
+
         for secret in overdue:
             secret_type = SecretType(secret['secret_type'])
             result = await self.rotate_secret(db, secret_type, manual=False)
             results.append(result)
-        
+
         successful = sum(1 for r in results if r['success'])
-        
+
         logger.info(
             "Automatic rotation complete: total=%d, successful=%d",
             len(results),
             successful
         )
-        
+
         return {
             "total_rotations": len(results),
             "successful_rotations": successful,
             "failed_rotations": len(results) - successful,
             "results": results
         }
-    
+
     async def get_rotation_history(
         self,
         db: AsyncSession,
@@ -280,17 +278,17 @@ class SecretsRotation:
             List of rotation records
         """
         since = datetime.utcnow() - timedelta(days=days)
-        
+
         query = select(SecretRotationLog).where(SecretRotationLog.rotated_at >= since)
-        
+
         if secret_type:
             query = query.where(SecretRotationLog.secret_type == secret_type.value)
-        
+
         query = query.order_by(SecretRotationLog.rotated_at.desc())
-        
+
         result = await db.execute(query)
         records = result.scalars().all()
-        
+
         return [
             {
                 "secret_type": record.secret_type,
