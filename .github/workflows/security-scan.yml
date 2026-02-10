@@ -13,6 +13,8 @@ jobs:
   pip-audit:
     name: Dependency Vulnerability Scan (pip-audit)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -41,6 +43,8 @@ jobs:
   safety:
     name: Dependency Safety Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -69,6 +73,8 @@ jobs:
   bandit:
     name: Static Application Security Testing (Bandit)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -97,6 +103,8 @@ jobs:
   checksum-verification:
     name: Verify Dependency Checksums
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -162,6 +170,8 @@ jobs:
   secrets-scan:
     name: Secrets Detection
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -176,6 +186,8 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
@@ -189,6 +201,8 @@ jobs:
   sbom-generation:
     name: Software Bill of Materials (SBOM)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -212,6 +226,7 @@ jobs:
   security-summary:
     name: Security Scan Summary
     runs-on: ubuntu-latest
+    permissions: {}
     needs: [pip-audit, safety, bandit, checksum-verification, codeql]
     if: always()
     steps:

@@ -14,6 +14,8 @@ jobs:
   lint:
     name: Lint & Format Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -42,6 +44,8 @@ jobs:
   type-check:
     name: Type Checking
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -66,6 +70,8 @@ jobs:
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -98,6 +104,8 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     services:
       postgres:
@@ -165,6 +173,8 @@ jobs:
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.event_name == 'push'
     
     services:
@@ -215,6 +225,8 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [lint, type-check, security-scan, test]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment:
@@ -251,6 +263,8 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [lint, type-check, security-scan, test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
