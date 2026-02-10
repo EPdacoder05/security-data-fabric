@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sdf-postgres
+    environment:
+      POSTGRES_USER: sdf_user
+      POSTGRES_PASSWORD: sdf_password_dev
+      POSTGRES_DB: security_data_fabric
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdf_user -d security_data_fabric"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sdf-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: sdf-redis
+    command: redis-server --requirepass redis_password_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sdf-network
+
+  # Application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sdf-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: security_data_fabric
+      DB_USER: sdf_user
+      DB_PASSWORD: sdf_password_dev
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: redis_password_dev
+      REDIS_DB: 0
+      REDIS_SSL: "false"
+      
+      # Application
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      API_V1_PREFIX: /api/v1
+      
+      # Security (dev keys only - use Azure Key Vault in production)
+      ENCRYPTION_KEY: dev-encryption-key-32-bytes-long
+      JWT_SIGNING_KEY: dev-jwt-signing-key-64-bytes-long
+      
+      # Metrics
+      METRICS_PORT: 9090
+      METRICS_PATH: /metrics
+    ports:
+      - "8000:8000"
+      - "9090:9090"
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    networks:
+      - sdf-network
+    restart: unless-stopped
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sdf-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - sdf-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sdf-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - sdf-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+networks:
+  sdf-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
