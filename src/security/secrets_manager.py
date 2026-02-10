@@ -1,4 +1,5 @@
 """Azure Key Vault secrets management with graceful fallback."""
+
 import logging
 import os
 from functools import lru_cache
@@ -28,18 +29,14 @@ class SecretsManager:
             try:
                 self._credential = DefaultAzureCredential()
                 self._client = SecretClient(
-                    vault_url=settings.azure_keyvault_url,
-                    credential=self._credential
+                    vault_url=settings.azure_keyvault_url, credential=self._credential
                 )
                 # Test connection
                 self._client.list_properties_of_secrets(max_page_size=1)
                 self._key_vault_available = True
                 logger.info("Azure Key Vault connected: %s", settings.azure_keyvault_url)
             except Exception as e:
-                logger.warning(
-                    "Azure Key Vault unavailable, falling back to .env: %s",
-                    str(e)
-                )
+                logger.warning("Azure Key Vault unavailable, falling back to .env: %s", str(e))
                 self._key_vault_available = False
         else:
             logger.info("Azure Key Vault not configured, using .env")
@@ -47,14 +44,14 @@ class SecretsManager:
     @lru_cache(maxsize=128)
     def get_secret(self, secret_name: str, fallback_env: Optional[str] = None) -> str:
         """Get secret from Key Vault with LRU caching and .env fallback.
-        
+
         Args:
             secret_name: Name of the secret in Key Vault
             fallback_env: Environment variable name for fallback
-            
+
         Returns:
             Secret value
-            
+
         Raises:
             ValueError: If secret not found in Key Vault or environment
         """
@@ -68,14 +65,10 @@ class SecretsManager:
                 secret = self._client.get_secret(secret_name)
                 value = secret.value
                 self._cache[secret_name] = value
-                logger.debug("Secret retrieved from Key Vault: %s", secret_name)
+                logger.debug("Secret retrieved from Azure Key Vault")
                 return value
             except AzureError as e:
-                logger.warning(
-                    "Failed to get secret %s from Key Vault: %s",
-                    secret_name,
-                    str(e)
-                )
+                logger.warning("Failed to get secret from Key Vault: %s", str(e))
 
         # Fallback to environment variable
         env_name = fallback_env or secret_name.upper().replace("-", "_")
@@ -83,7 +76,7 @@ class SecretsManager:
 
         if value:
             self._cache[secret_name] = value
-            logger.debug("Secret retrieved from environment: %s", env_name)
+            logger.debug("Secret retrieved from environment variable")
             return value
 
         # Try from settings object
@@ -92,10 +85,10 @@ class SecretsManager:
             value = getattr(settings, settings_attr)
             if value:
                 self._cache[secret_name] = value
-                logger.debug("Secret retrieved from settings: %s", settings_attr)
+                logger.debug("Secret retrieved from application settings")
                 return value
 
-        raise ValueError(f"Secret not found: {secret_name} (tried Key Vault and env:{env_name})")
+        raise ValueError("Secret not found (tried Key Vault and environment)")
 
     def get_openai_key(self) -> str:
         """Get OpenAI API key."""
@@ -131,10 +124,10 @@ class SecretsManager:
 
     def get_connector_token(self, connector_name: str) -> str:
         """Get data source connector token.
-        
+
         Args:
             connector_name: Name of connector (e.g., "dynatrace", "splunk")
-            
+
         Returns:
             Connector API token
         """
@@ -154,7 +147,7 @@ class SecretsManager:
 
     def get_all_secret_names(self) -> list[str]:
         """Get list of all secret names in Key Vault.
-        
+
         Returns:
             List of secret names or empty list if Key Vault unavailable
         """
@@ -170,11 +163,11 @@ class SecretsManager:
 
     def set_secret(self, secret_name: str, secret_value: str) -> bool:
         """Set or update a secret in Key Vault.
-        
+
         Args:
             secret_name: Name of the secret
             secret_value: Secret value
-            
+
         Returns:
             True if successful
         """
@@ -187,10 +180,10 @@ class SecretsManager:
             # Clear cache for this secret
             if secret_name in self._cache:
                 del self._cache[secret_name]
-            logger.info("Secret updated in Key Vault: %s", secret_name)
+            logger.info("Secret updated in Key Vault")
             return True
         except AzureError as e:
-            logger.error("Failed to set secret %s: %s", secret_name, str(e))
+            logger.error("Failed to set secret in Key Vault: %s", str(e))
             return False
 
     def close(self) -> None:

@@ -1,4 +1,5 @@
 """SOC2 and ISO 27001 control verification."""
+
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
@@ -47,16 +48,14 @@ class ComplianceControlVerifier:
     """Verify SOC2 and ISO 27001 control implementation."""
 
     async def verify_control(
-        self,
-        db: AsyncSession,
-        control: SOC2Control | ISO27001Control
+        self, db: AsyncSession, control: SOC2Control | ISO27001Control
     ) -> Dict[str, Any]:
         """Verify a specific control is implemented and functioning.
-        
+
         Args:
             db: Database session
             control: Control to verify
-            
+
         Returns:
             Verification result with status and evidence
         """
@@ -65,11 +64,7 @@ class ComplianceControlVerifier:
         else:
             return await self._verify_iso27001_control(db, control)
 
-    async def _verify_soc2_control(
-        self,
-        db: AsyncSession,
-        control: SOC2Control
-    ) -> Dict[str, Any]:
+    async def _verify_soc2_control(self, db: AsyncSession, control: SOC2Control) -> Dict[str, Any]:
         """Verify SOC2 control."""
         if control == SOC2Control.CC6_1:
             # Verify logical access security software (MFA, encryption)
@@ -95,19 +90,18 @@ class ComplianceControlVerifier:
             return {
                 "control": control.value,
                 "status": "not_implemented",
-                "message": "Control verification not implemented"
+                "message": "Control verification not implemented",
             }
 
     async def _verify_cc6_1(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC6.1: Logical access security software."""
         # Check MFA is enabled
-        mfa_count_result = await db.execute(
-            select(func.count()).select_from(MFAToken)
-        )
+        mfa_count_result = await db.execute(select(func.count()).select_from(MFAToken))
         mfa_count = mfa_count_result.scalar() or 0
 
         # Check encryption is configured
         from src.config import settings
+
         encryption_enabled = bool(settings.encryption_key)
 
         compliant = mfa_count > 0 and encryption_enabled
@@ -116,24 +110,18 @@ class ComplianceControlVerifier:
             "control": "CC6.1",
             "name": "Logical and Physical Access Controls - Security Software",
             "status": "compliant" if compliant else "non_compliant",
-            "evidence": {
-                "mfa_tokens": mfa_count,
-                "encryption_enabled": encryption_enabled
-            },
-            "verified_at": datetime.utcnow().isoformat()
+            "evidence": {"mfa_tokens": mfa_count, "encryption_enabled": encryption_enabled},
+            "verified_at": datetime.utcnow().isoformat(),
         }
 
     async def _verify_cc6_2(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC6.2: Identification and authentication."""
         # Check MFA adoption
-        total_users_result = await db.execute(
-            select(func.count(func.distinct(MFAToken.user_id)))
-        )
+        total_users_result = await db.execute(select(func.count(func.distinct(MFAToken.user_id))))
         total_users = total_users_result.scalar() or 0
 
         verified_users_result = await db.execute(
-            select(func.count(func.distinct(MFAToken.user_id)))
-            .where(MFAToken.verified == True)  # noqa: E712
+            select(func.count(func.distinct(MFAToken.user_id))).where(MFAToken.verified == True)  # noqa: E712
         )
         verified_users = verified_users_result.scalar() or 0
 
@@ -147,18 +135,16 @@ class ComplianceControlVerifier:
             "evidence": {
                 "total_users": total_users,
                 "mfa_enabled_users": verified_users,
-                "adoption_rate": adoption_rate
+                "adoption_rate": adoption_rate,
             },
-            "verified_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.utcnow().isoformat(),
         }
 
     async def _verify_cc6_7(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify CC6.7: Access removed when no longer needed."""
         # Check for revoked tokens
         revoked_tokens_result = await db.execute(
-            select(func.count())
-            .select_from(RefreshToken)
-            .where(RefreshToken.revoked == True)  # noqa: E712
+            select(func.count()).select_from(RefreshToken).where(RefreshToken.revoked == True)  # noqa: E712
         )
         revoked_count = revoked_tokens_result.scalar() or 0
 
@@ -167,7 +153,7 @@ class ComplianceControlVerifier:
         revocation_logs_result = await db.execute(
             select(func.count())
             .select_from(AuditLog)
-            .where(AuditLog.action == 'TOKEN_REVOKED')
+            .where(AuditLog.action == "TOKEN_REVOKED")
             .where(AuditLog.timestamp >= thirty_days_ago)
         )
         revocation_logs = revocation_logs_result.scalar() or 0
@@ -180,9 +166,9 @@ class ComplianceControlVerifier:
             "status": "compliant" if compliant else "non_compliant",
             "evidence": {
                 "revoked_tokens": revoked_count,
-                "revocation_logs_last_30d": revocation_logs
+                "revocation_logs_last_30d": revocation_logs,
             },
-            "verified_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.utcnow().isoformat(),
         }
 
     async def _verify_cc7_1(self, db: AsyncSession) -> Dict[str, Any]:
@@ -192,7 +178,7 @@ class ComplianceControlVerifier:
         detection_logs_result = await db.execute(
             select(func.count())
             .select_from(AuditLog)
-            .where(AuditLog.action == 'ANOMALY_DETECTED')
+            .where(AuditLog.action == "ANOMALY_DETECTED")
             .where(AuditLog.timestamp >= thirty_days_ago)
         )
         detections = detection_logs_result.scalar() or 0
@@ -205,9 +191,9 @@ class ComplianceControlVerifier:
             "status": "compliant" if compliant else "non_compliant",
             "evidence": {
                 "anomalies_detected_last_30d": detections,
-                "detection_system_active": True
+                "detection_system_active": True,
             },
-            "verified_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.utcnow().isoformat(),
         }
 
     async def _verify_cc7_5(self, db: AsyncSession) -> Dict[str, Any]:
@@ -217,7 +203,7 @@ class ComplianceControlVerifier:
 
         # Count different types of logged events
         event_counts = {}
-        for action in ['CREATE', 'READ', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT']:
+        for action in ["CREATE", "READ", "UPDATE", "DELETE", "LOGIN", "LOGOUT"]:
             result = await db.execute(
                 select(func.count())
                 .select_from(AuditLog)
@@ -233,17 +219,12 @@ class ComplianceControlVerifier:
             "control": "CC7.5",
             "name": "System Operations - Security Event Logging",
             "status": "compliant" if compliant else "non_compliant",
-            "evidence": {
-                "total_events_last_30d": total_events,
-                "events_by_type": event_counts
-            },
-            "verified_at": datetime.utcnow().isoformat()
+            "evidence": {"total_events_last_30d": total_events, "events_by_type": event_counts},
+            "verified_at": datetime.utcnow().isoformat(),
         }
 
     async def _verify_iso27001_control(
-        self,
-        db: AsyncSession,
-        control: ISO27001Control
+        self, db: AsyncSession, control: ISO27001Control
     ) -> Dict[str, Any]:
         """Verify ISO 27001 control."""
         if control == ISO27001Control.A_9_4_2:
@@ -258,15 +239,12 @@ class ComplianceControlVerifier:
             return {
                 "control": control.value,
                 "status": "not_implemented",
-                "message": "Control verification not implemented"
+                "message": "Control verification not implemented",
             }
 
-    async def verify_all_controls(
-        self,
-        db: AsyncSession
-    ) -> Dict[str, Any]:
+    async def verify_all_controls(self, db: AsyncSession) -> Dict[str, Any]:
         """Verify all implemented controls.
-        
+
         Returns:
             Summary of all control verifications
         """
@@ -275,7 +253,7 @@ class ComplianceControlVerifier:
             SOC2Control.CC6_2,
             SOC2Control.CC6_7,
             SOC2Control.CC7_1,
-            SOC2Control.CC7_5
+            SOC2Control.CC7_5,
         ]
 
         results = []
@@ -283,14 +261,14 @@ class ComplianceControlVerifier:
             result = await self.verify_control(db, control)
             results.append(result)
 
-        compliant_count = sum(1 for r in results if r['status'] == 'compliant')
+        compliant_count = sum(1 for r in results if r["status"] == "compliant")
 
         return {
             "total_controls": len(results),
             "compliant_controls": compliant_count,
             "compliance_rate": compliant_count / len(results) if results else 0,
             "controls": results,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
 

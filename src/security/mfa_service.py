@@ -1,4 +1,5 @@
 """Multi-Factor Authentication service with Okta integration."""
+
 import logging
 import time
 from enum import Enum
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class MFAType(str, Enum):
     """MFA verification methods."""
+
     TOTP = "totp"  # Google Authenticator, Authy
     SMS = "sms"
     EMAIL = "email"
@@ -39,50 +41,42 @@ class MFAService:
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                }
+                },
             )
         return self._http_client
 
     def generate_totp_secret(self) -> str:
         """Generate a new TOTP secret for user enrollment.
-        
+
         Returns:
             Base32-encoded secret string
         """
         return pyotp.random_base32()
 
     def generate_totp_uri(
-        self,
-        secret: str,
-        user_email: str,
-        issuer: str = "Security Data Fabric"
+        self, secret: str, user_email: str, issuer: str = "Security Data Fabric"
     ) -> str:
         """Generate TOTP provisioning URI for QR code.
-        
+
         Args:
             secret: TOTP secret
             user_email: User's email address
             issuer: Application name
-            
+
         Returns:
             otpauth:// URI for QR code generation
         """
         totp = pyotp.TOTP(secret)
         return totp.provisioning_uri(name=user_email, issuer_name=issuer)
 
-    async def verify_totp(
-        self,
-        secret: str,
-        code: str,
-        window: int = 1
-    ) -> bool:
+    async def verify_totp(self, secret: str, code: str, window: int = 1) -> bool:
         """Verify TOTP code with time window tolerance.
-        
+
         Args:
             secret: User's TOTP secret
             code: 6-digit code from authenticator app
             window: Number of time windows to check (default: ±30 seconds)
-            
+
         Returns:
             True if code is valid
         """
@@ -107,11 +101,11 @@ class MFAService:
 
     async def send_sms_code(self, phone_number: str, user_id: str) -> Optional[str]:
         """Send SMS verification code via Okta.
-        
+
         Args:
             phone_number: User's phone number (E.164 format)
             user_id: Okta user ID
-            
+
         Returns:
             Transaction ID for verification or None on error
         """
@@ -128,18 +122,14 @@ class MFAService:
                 json={
                     "factorType": "sms",
                     "provider": "OKTA",
-                    "profile": {
-                        "phoneNumber": phone_number
-                    }
+                    "profile": {"phoneNumber": phone_number},
                 },
-                headers={
-                    "Authorization": f"SSWS {self.okta_client_secret}"
-                }
+                headers={"Authorization": f"SSWS {self.okta_client_secret}"},
             )
 
             if response.status_code == 200:
                 data = response.json()
-                logger.info("SMS code sent to %s", phone_number[-4:])
+                logger.info("SMS code sent successfully for user_id=%s", user_id)
                 return data.get("id")
             else:
                 logger.error("SMS send failed: %s", response.text)
@@ -149,19 +139,14 @@ class MFAService:
             logger.error("SMS send error: %s", str(e))
             return None
 
-    async def verify_sms_code(
-        self,
-        factor_id: str,
-        code: str,
-        user_id: str
-    ) -> bool:
+    async def verify_sms_code(self, factor_id: str, code: str, user_id: str) -> bool:
         """Verify SMS code via Okta.
-        
+
         Args:
             factor_id: Okta factor ID from send_sms_code
             code: 6-digit SMS code
             user_id: Okta user ID
-            
+
         Returns:
             True if code is valid
         """
@@ -178,9 +163,7 @@ class MFAService:
             response = await client.post(
                 url,
                 json={"passCode": code},
-                headers={
-                    "Authorization": f"SSWS {self.okta_client_secret}"
-                }
+                headers={"Authorization": f"SSWS {self.okta_client_secret}"},
             )
 
             duration = (time.perf_counter() - start_time) * 1000
@@ -189,8 +172,7 @@ class MFAService:
             if is_valid:
                 logger.info("SMS verification SUCCESS (%.2fms)", duration)
             else:
-                logger.warning("SMS verification FAILED (%.2fms): %s",
-                             duration, response.text)
+                logger.warning("SMS verification FAILED (%.2fms): %s", duration, response.text)
 
             return is_valid
 
@@ -200,11 +182,11 @@ class MFAService:
 
     async def send_email_code(self, email: str, user_id: str) -> Optional[str]:
         """Send email verification code via Okta.
-        
+
         Args:
             email: User's email address
             user_id: Okta user ID
-            
+
         Returns:
             Transaction ID for verification or None on error
         """
@@ -218,16 +200,8 @@ class MFAService:
 
             response = await client.post(
                 url,
-                json={
-                    "factorType": "email",
-                    "provider": "OKTA",
-                    "profile": {
-                        "email": email
-                    }
-                },
-                headers={
-                    "Authorization": f"SSWS {self.okta_client_secret}"
-                }
+                json={"factorType": "email", "provider": "OKTA", "profile": {"email": email}},
+                headers={"Authorization": f"SSWS {self.okta_client_secret}"},
             )
 
             if response.status_code == 200:
@@ -244,11 +218,11 @@ class MFAService:
 
     async def send_push_notification(self, user_id: str, device_id: str) -> Optional[str]:
         """Send push notification via Okta Verify.
-        
+
         Args:
             user_id: Okta user ID
             device_id: Device factor ID
-            
+
         Returns:
             Transaction ID for polling or None on error
         """
@@ -261,10 +235,7 @@ class MFAService:
             url = f"https://{self.okta_domain}/api/v1/users/{user_id}/factors/{device_id}/verify"
 
             response = await client.post(
-                url,
-                headers={
-                    "Authorization": f"SSWS {self.okta_client_secret}"
-                }
+                url, headers={"Authorization": f"SSWS {self.okta_client_secret}"}
             )
 
             if response.status_code == 200:
@@ -285,17 +256,17 @@ class MFAService:
         password: str,
         mfa_code: str,
         mfa_type: MFAType = MFAType.TOTP,
-        totp_secret: Optional[str] = None
+        totp_secret: Optional[str] = None,
     ) -> tuple[bool, Optional[str]]:
         """Complete two-factor authentication flow.
-        
+
         Args:
             username: User's username
             password: User's password
             mfa_code: MFA verification code
             mfa_type: Type of MFA being used
             totp_secret: TOTP secret (required for TOTP)
-            
+
         Returns:
             Tuple of (success, error_message)
         """

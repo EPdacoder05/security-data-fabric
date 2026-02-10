@@ -1,4 +1,5 @@
 """SLA tracking for security incidents."""
+
 import logging
 from datetime import datetime, timedelta
 from enum import IntEnum
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class SeverityLevel(IntEnum):
     """Incident severity levels."""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -27,27 +29,23 @@ class SLATracker:
     # SLA targets in minutes
     SLA_TARGETS = {
         SeverityLevel.EMERGENCY: 120,  # 2 hours
-        SeverityLevel.CRITICAL: 120,   # 2 hours
-        SeverityLevel.HIGH: 480,       # 8 hours
-        SeverityLevel.MEDIUM: 1440,    # 24 hours
-        SeverityLevel.LOW: 4320,       # 72 hours
+        SeverityLevel.CRITICAL: 120,  # 2 hours
+        SeverityLevel.HIGH: 480,  # 8 hours
+        SeverityLevel.MEDIUM: 1440,  # 24 hours
+        SeverityLevel.LOW: 4320,  # 72 hours
     }
 
     async def track_incident(
-        self,
-        db: AsyncSession,
-        incident_id: str,
-        severity: int,
-        detected_at: datetime
+        self, db: AsyncSession, incident_id: str, severity: int, detected_at: datetime
     ) -> Dict[str, Any]:
         """Start tracking SLA for a new incident.
-        
+
         Args:
             db: Database session
             incident_id: Unique incident identifier
             severity: Severity level (1-5)
             detected_at: When incident was detected
-            
+
         Returns:
             SLA tracking record
         """
@@ -58,7 +56,7 @@ class SLATracker:
             incident_id=incident_id,
             severity=severity,
             target_response_minutes=target_minutes,
-            created_at=detected_at
+            created_at=detected_at,
         )
 
         db.add(sla_record)
@@ -68,36 +66,31 @@ class SLATracker:
             "SLA tracking started: incident=%s, severity=%d, target=%dm",
             incident_id,
             severity,
-            target_minutes
+            target_minutes,
         )
 
         return {
             "incident_id": incident_id,
             "severity": severity,
             "target_response_minutes": target_minutes,
-            "breach_at": (detected_at + timedelta(minutes=target_minutes)).isoformat()
+            "breach_at": (detected_at + timedelta(minutes=target_minutes)).isoformat(),
         }
 
     async def record_response(
-        self,
-        db: AsyncSession,
-        incident_id: str,
-        responded_at: datetime
+        self, db: AsyncSession, incident_id: str, responded_at: datetime
     ) -> Dict[str, Any]:
         """Record when incident was responded to.
-        
+
         Args:
             db: Database session
             incident_id: Incident identifier
             responded_at: When response occurred
-            
+
         Returns:
             Updated SLA record with compliance status
         """
         # Get SLA record
-        result = await db.execute(
-            select(SLATracking).where(SLATracking.incident_id == incident_id)
-        )
+        result = await db.execute(select(SLATracking).where(SLATracking.incident_id == incident_id))
         sla_record = result.scalar_one_or_none()
 
         if not sla_record:
@@ -128,7 +121,7 @@ class SLATracker:
             incident_id,
             response_minutes,
             sla_record.target_response_minutes,
-            sla_met
+            sla_met,
         )
 
         return {
@@ -136,28 +129,23 @@ class SLATracker:
             "actual_response_minutes": response_minutes,
             "target_response_minutes": sla_record.target_response_minutes,
             "sla_met": sla_met,
-            "breach_minutes": max(0, response_minutes - sla_record.target_response_minutes)
+            "breach_minutes": max(0, response_minutes - sla_record.target_response_minutes),
         }
 
     async def record_resolution(
-        self,
-        db: AsyncSession,
-        incident_id: str,
-        resolved_at: datetime
+        self, db: AsyncSession, incident_id: str, resolved_at: datetime
     ) -> bool:
         """Record when incident was resolved.
-        
+
         Args:
             db: Database session
             incident_id: Incident identifier
             resolved_at: When incident was resolved
-            
+
         Returns:
             True if recorded successfully
         """
-        result = await db.execute(
-            select(SLATracking).where(SLATracking.incident_id == incident_id)
-        )
+        result = await db.execute(select(SLATracking).where(SLATracking.incident_id == incident_id))
         sla_record = result.scalar_one_or_none()
 
         if not sla_record:
@@ -170,22 +158,18 @@ class SLATracker:
         return True
 
     async def get_incident_sla(
-        self,
-        db: AsyncSession,
-        incident_id: str
+        self, db: AsyncSession, incident_id: str
     ) -> Optional[Dict[str, Any]]:
         """Get SLA status for a specific incident.
-        
+
         Args:
             db: Database session
             incident_id: Incident identifier
-            
+
         Returns:
             SLA status or None if not found
         """
-        result = await db.execute(
-            select(SLATracking).where(SLATracking.incident_id == incident_id)
-        )
+        result = await db.execute(select(SLATracking).where(SLATracking.incident_id == incident_id))
         sla_record = result.scalar_one_or_none()
 
         if not sla_record:
@@ -199,22 +183,22 @@ class SLATracker:
             "sla_met": sla_record.sla_met,
             "breached_at": sla_record.breached_at.isoformat() if sla_record.breached_at else None,
             "resolved_at": sla_record.resolved_at.isoformat() if sla_record.resolved_at else None,
-            "created_at": sla_record.created_at.isoformat()
+            "created_at": sla_record.created_at.isoformat(),
         }
 
     async def get_sla_compliance_report(
         self,
         db: AsyncSession,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         """Generate SLA compliance report for a time period.
-        
+
         Args:
             db: Database session
             start_date: Report start date (default: 30 days ago)
             end_date: Report end date (default: now)
-            
+
         Returns:
             Compliance report with metrics by severity
         """
@@ -226,11 +210,9 @@ class SLATracker:
 
         # Query SLA records
         result = await db.execute(
-            select(SLATracking)
-            .where(and_(
-                SLATracking.created_at >= start_date,
-                SLATracking.created_at <= end_date
-            ))
+            select(SLATracking).where(
+                and_(SLATracking.created_at >= start_date, SLATracking.created_at <= end_date)
+            )
         )
         sla_records = result.scalars().all()
 
@@ -261,7 +243,7 @@ class SLATracker:
                 "sla_breached": breached,
                 "compliance_rate": met / total if total > 0 else 0,
                 "target_minutes": self.SLA_TARGETS[severity_level],
-                "avg_response_minutes": avg_response
+                "avg_response_minutes": avg_response,
             }
 
         # Calculate overall metrics
@@ -270,31 +252,24 @@ class SLATracker:
         overall_compliance = total_met / total_incidents if total_incidents > 0 else 0
 
         return {
-            "period": {
-                "start": start_date.isoformat(),
-                "end": end_date.isoformat()
-            },
+            "period": {"start": start_date.isoformat(), "end": end_date.isoformat()},
             "overall": {
                 "total_incidents": total_incidents,
                 "sla_met": total_met,
                 "sla_breached": total_incidents - total_met,
-                "compliance_rate": overall_compliance
+                "compliance_rate": overall_compliance,
             },
             "by_severity": severity_metrics,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
-    async def get_breached_slas(
-        self,
-        db: AsyncSession,
-        limit: int = 50
-    ) -> List[Dict[str, Any]]:
+    async def get_breached_slas(self, db: AsyncSession, limit: int = 50) -> List[Dict[str, Any]]:
         """Get recent SLA breaches.
-        
+
         Args:
             db: Database session
             limit: Maximum number of breaches to return
-            
+
         Returns:
             List of breached SLAs
         """
@@ -314,15 +289,17 @@ class SLATracker:
                 else 0
             )
 
-            breaches.append({
-                "incident_id": record.incident_id,
-                "severity": record.severity,
-                "target_minutes": record.target_response_minutes,
-                "actual_minutes": record.actual_response_minutes,
-                "breach_minutes": breach_minutes,
-                "breached_at": record.breached_at.isoformat() if record.breached_at else None,
-                "created_at": record.created_at.isoformat()
-            })
+            breaches.append(
+                {
+                    "incident_id": record.incident_id,
+                    "severity": record.severity,
+                    "target_minutes": record.target_response_minutes,
+                    "actual_minutes": record.actual_response_minutes,
+                    "breach_minutes": breach_minutes,
+                    "breached_at": record.breached_at.isoformat() if record.breached_at else None,
+                    "created_at": record.created_at.isoformat(),
+                }
+            )
 
         return breaches
 

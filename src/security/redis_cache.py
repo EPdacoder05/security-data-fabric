@@ -1,4 +1,5 @@
 """Redis distributed cache with AES-256 encryption and audit logging."""
+
 import hashlib
 import json
 import logging
@@ -38,8 +39,9 @@ class RedisCache:
                 retry_on_timeout=True,
             )
             self._client = redis.Redis(connection_pool=self._pool)
-            logger.info("Redis connection pool created with max %d connections",
-                       settings.redis_pool_max)
+            logger.info(
+                "Redis connection pool created with max %d connections", settings.redis_pool_max
+            )
         return self._client
 
     def _get_encryption_key(self) -> bytes:
@@ -88,11 +90,11 @@ class RedisCache:
 
     async def get(self, key: str, decrypt: bool = False) -> Optional[Any]:
         """Get value from cache with optional decryption.
-        
+
         Args:
             key: Cache key
             decrypt: Whether to decrypt the value
-            
+
         Returns:
             Cached value or None if not found
         """
@@ -120,20 +122,16 @@ class RedisCache:
             return None
 
     async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl: Optional[int] = None,
-        encrypt: bool = False
+        self, key: str, value: Any, ttl: Optional[int] = None, encrypt: bool = False
     ) -> bool:
         """Set value in cache with optional encryption and TTL.
-        
+
         Args:
             key: Cache key
             value: Value to cache (will be JSON serialized)
             ttl: Time to live in seconds
             encrypt: Whether to encrypt the value
-            
+
         Returns:
             True if successful
         """
@@ -168,10 +166,10 @@ class RedisCache:
 
     async def delete(self, key: str) -> bool:
         """Delete key from cache.
-        
+
         Args:
             key: Cache key to delete
-            
+
         Returns:
             True if key was deleted
         """
@@ -196,11 +194,11 @@ class RedisCache:
 
     async def increment(self, key: str, amount: int = 1) -> Optional[int]:
         """Increment counter (for rate limiting).
-        
+
         Args:
             key: Counter key
             amount: Amount to increment by
-            
+
         Returns:
             New counter value or None on error
         """
@@ -245,21 +243,22 @@ def cached(
     ttl: int = 300,
     namespace: str = "default",
     encrypt: bool = False,
-    key_func: Optional[Callable] = None
+    key_func: Optional[Callable] = None,
 ):
     """Decorator for automatic caching with TTL and namespace.
-    
+
     Args:
         ttl: Time to live in seconds (default: 5 minutes)
         namespace: Cache namespace for organization
         encrypt: Whether to encrypt cached values
         key_func: Optional function to generate cache key from args
-        
+
     Example:
         @cached(ttl=3600, namespace="user", encrypt=True)
         async def get_user(user_id: str):
             return await db.fetch_user(user_id)
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -290,17 +289,18 @@ def cached(
             return result
 
         return wrapper
+
     return decorator
 
 
 async def rate_limit(key: str, limit: int, window: int) -> bool:
     """Rate limiting using Redis counters.
-    
+
     Args:
         key: Rate limit key (e.g., f"ratelimit:user:{user_id}")
         limit: Maximum requests allowed
         window: Time window in seconds
-        
+
     Returns:
         True if within rate limit, False if exceeded
     """

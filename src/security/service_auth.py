@@ -1,4 +1,5 @@
 """Service-to-service JWT authentication with scope-based authorization."""
+
 import logging
 import uuid
 from datetime import datetime, timedelta
@@ -33,21 +34,18 @@ class ServiceAuth:
         self.signing_key = settings.jwt_signing_key or "development-jwt-key"
 
     def create_service_token(
-        self,
-        service_name: str,
-        scopes: List[str],
-        expiry_days: int = 30
+        self, service_name: str, scopes: List[str], expiry_days: int = 30
     ) -> str:
         """Create a service token with scopes.
-        
+
         Args:
             service_name: Name of the service (e.g., "incident-processor")
             scopes: List of allowed scopes
             expiry_days: Token expiration in days (default: 30)
-            
+
         Returns:
             JWT token string
-            
+
         Example:
             token = auth.create_service_token(
                 "incident-processor",
@@ -79,26 +77,22 @@ class ServiceAuth:
             "Service token created: service=%s, scopes=%s, expires=%s",
             service_name,
             ",".join(scopes),
-            expires_at.isoformat()
+            expires_at.isoformat(),
         )
 
         return token
 
     def verify_service_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Verify and decode service token.
-        
+
         Args:
             token: JWT token string
-            
+
         Returns:
             Decoded token payload or None if invalid
         """
         try:
-            payload = jwt.decode(
-                token,
-                self.signing_key,
-                algorithms=[self.algorithm]
-            )
+            payload = jwt.decode(token, self.signing_key, algorithms=[self.algorithm])
 
             # Verify token type
             if payload.get("type") != "service":
@@ -114,11 +108,11 @@ class ServiceAuth:
 
     def has_scope(self, token_payload: Dict[str, Any], required_scope: str) -> bool:
         """Check if token has required scope.
-        
+
         Args:
             token_payload: Decoded JWT payload
             required_scope: Required scope (e.g., "incidents:write")
-            
+
         Returns:
             True if token has scope or admin:full
         """
@@ -130,20 +124,16 @@ class ServiceAuth:
 
         return required_scope in scopes
 
-    def require_scopes(
-        self,
-        token: str,
-        required_scopes: List[str]
-    ) -> tuple[bool, Optional[str]]:
+    def require_scopes(self, token: str, required_scopes: List[str]) -> tuple[bool, Optional[str]]:
         """Verify token and check for required scopes.
-        
+
         Args:
             token: JWT token string
             required_scopes: List of required scopes (user needs at least one)
-            
+
         Returns:
             Tuple of (authorized, error_message)
-            
+
         Example:
             authorized, error = auth.require_scopes(
                 token,
@@ -171,20 +161,16 @@ class ServiceAuth:
         return True, None
 
     def create_user_token(
-        self,
-        user_id: str,
-        email: str,
-        roles: List[str],
-        expiry_minutes: Optional[int] = None
+        self, user_id: str, email: str, roles: List[str], expiry_minutes: Optional[int] = None
     ) -> str:
         """Create a user access token.
-        
+
         Args:
             user_id: User's unique ID
             email: User's email
             roles: User's roles
             expiry_minutes: Token expiration (default: from settings)
-            
+
         Returns:
             JWT token string
         """
@@ -209,26 +195,22 @@ class ServiceAuth:
             "User token created: user_id=%s, roles=%s, expires_in=%dm",
             user_id,
             ",".join(roles),
-            expiry
+            expiry,
         )
 
         return token
 
     def verify_user_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Verify and decode user token.
-        
+
         Args:
             token: JWT token string
-            
+
         Returns:
             Decoded token payload or None if invalid
         """
         try:
-            payload = jwt.decode(
-                token,
-                self.signing_key,
-                algorithms=[self.algorithm]
-            )
+            payload = jwt.decode(token, self.signing_key, algorithms=[self.algorithm])
 
             # Verify token type
             if payload.get("type") != "user":
@@ -244,13 +226,13 @@ class ServiceAuth:
 
     def extract_token_from_header(self, authorization: str) -> Optional[str]:
         """Extract JWT token from Authorization header.
-        
+
         Args:
             authorization: Authorization header value
-            
+
         Returns:
             Token string or None
-            
+
         Example:
             token = auth.extract_token_from_header("Bearer eyJ...")
         """

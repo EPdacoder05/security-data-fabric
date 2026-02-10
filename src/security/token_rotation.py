@@ -1,4 +1,5 @@
 """Refresh token rotation for preventing token replay attacks."""
+
 import hashlib
 import logging
 import secrets
@@ -33,28 +34,22 @@ class TokenRotation:
         return hashlib.sha256(token.encode()).hexdigest()
 
     async def create_token_pair(
-        self,
-        db: AsyncSession,
-        user_id: str,
-        email: str,
-        roles: list[str]
+        self, db: AsyncSession, user_id: str, email: str, roles: list[str]
     ) -> Tuple[str, str]:
         """Create access + refresh token pair.
-        
+
         Args:
             db: Database session
             user_id: User's unique ID
             email: User's email
             roles: User's roles
-            
+
         Returns:
             Tuple of (access_token, refresh_token)
         """
         # Create access token (short-lived)
         access_token = self.service_auth.create_user_token(
-            user_id=user_id,
-            email=email,
-            roles=roles
+            user_id=user_id, email=email, roles=roles
         )
 
         # Create refresh token (long-lived)
@@ -69,37 +64,30 @@ class TokenRotation:
             user_id=uuid.UUID(user_id) if isinstance(user_id, str) else user_id,
             token_hash=token_hash,
             expires_at=expires_at,
-            revoked=False
+            revoked=False,
         )
 
         db.add(db_token)
         await db.commit()
 
         logger.info(
-            "Token pair created: user_id=%s, expires_at=%s",
-            user_id,
-            expires_at.isoformat()
+            "Token pair created: user_id=%s, expires_at=%s", user_id, expires_at.isoformat()
         )
 
         return access_token, refresh_token
 
     async def rotate_refresh_token(
-        self,
-        db: AsyncSession,
-        refresh_token: str,
-        user_id: str,
-        email: str,
-        roles: list[str]
+        self, db: AsyncSession, refresh_token: str, user_id: str, email: str, roles: list[str]
     ) -> Optional[Tuple[str, str]]:
         """Rotate refresh token (single-use).
-        
+
         Args:
             db: Database session
             refresh_token: Current refresh token
             user_id: User's unique ID
             email: User's email
             roles: User's roles
-            
+
         Returns:
             Tuple of (new_access_token, new_refresh_token) or None if invalid
         """
@@ -123,9 +111,7 @@ class TokenRotation:
 
             # Mark as revoked
             await db.execute(
-                update(RefreshToken)
-                .where(RefreshToken.id == db_token.id)
-                .values(revoked=True)
+                update(RefreshToken).where(RefreshToken.id == db_token.id).values(revoked=True)
             )
             await db.commit()
 
@@ -133,17 +119,12 @@ class TokenRotation:
 
         # Revoke old token (single-use)
         await db.execute(
-            update(RefreshToken)
-            .where(RefreshToken.id == db_token.id)
-            .values(revoked=True)
+            update(RefreshToken).where(RefreshToken.id == db_token.id).values(revoked=True)
         )
 
         # Create new token pair
         new_access_token, new_refresh_token = await self.create_token_pair(
-            db=db,
-            user_id=user_id,
-            email=email,
-            roles=roles
+            db=db, user_id=user_id, email=email, roles=roles
         )
 
         # Link old token to new one (for audit trail)
@@ -165,18 +146,18 @@ class TokenRotation:
             "Refresh token rotated: user_id=%s, old_token_id=%s, new_token_id=%s",
             user_id,
             db_token.id,
-            new_db_token.id
+            new_db_token.id,
         )
 
         return new_access_token, new_refresh_token
 
     async def revoke_token(self, db: AsyncSession, refresh_token: str) -> bool:
         """Manually revoke a refresh token.
-        
+
         Args:
             db: Database session
             refresh_token: Refresh token to revoke
-            
+
         Returns:
             True if token was revoked
         """
@@ -200,11 +181,11 @@ class TokenRotation:
 
     async def revoke_all_user_tokens(self, db: AsyncSession, user_id: str) -> int:
         """Revoke all refresh tokens for a user (e.g., on password change).
-        
+
         Args:
             db: Database session
             user_id: User's unique ID
-            
+
         Returns:
             Number of tokens revoked
         """
@@ -227,10 +208,10 @@ class TokenRotation:
 
     async def cleanup_expired_tokens(self, db: AsyncSession) -> int:
         """Clean up expired refresh tokens (maintenance task).
-        
+
         Args:
             db: Database session
-            
+
         Returns:
             Number of tokens cleaned up
         """

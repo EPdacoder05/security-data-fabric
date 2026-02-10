@@ -1,4 +1,5 @@
 """Automated secrets rotation on 90-day schedule."""
+
 import logging
 import secrets
 import uuid
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class SecretType(str, Enum):
     """Types of secrets that require rotation."""
+
     DATABASE_PASSWORD = "database_password"
     REDIS_PASSWORD = "redis_password"
     JWT_SIGNING_KEY = "jwt_signing_key"
@@ -48,10 +50,10 @@ class SecretsRotation:
 
     async def _generate_secure_secret(self, secret_type: SecretType) -> str:
         """Generate a cryptographically secure secret.
-        
+
         Args:
             secret_type: Type of secret to generate
-            
+
         Returns:
             Generated secret string
         """
@@ -77,16 +79,16 @@ class SecretsRotation:
         db: AsyncSession,
         secret_type: SecretType,
         manual: bool = False,
-        custom_value: Optional[str] = None
+        custom_value: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Rotate a secret.
-        
+
         Args:
             db: Database session
             secret_type: Type of secret to rotate
             manual: Whether this is a manual rotation
             custom_value: Custom secret value (optional)
-            
+
         Returns:
             Rotation result
         """
@@ -116,7 +118,7 @@ class SecretsRotation:
                 next_rotation_due=next_rotation,
                 rotation_successful=True,
                 rotation_method="manual" if manual else "automatic",
-                notes="Secret rotated successfully"
+                notes="Secret rotated successfully",
             )
 
             db.add(rotation_log)
@@ -125,14 +127,14 @@ class SecretsRotation:
             logger.info(
                 "Secret rotated successfully: type=%s, next_due=%s",
                 secret_type.value,
-                next_rotation.isoformat()
+                next_rotation.isoformat(),
             )
 
             return {
                 "secret_type": secret_type.value,
                 "rotated_at": rotation_log.rotated_at.isoformat(),
                 "next_rotation_due": next_rotation.isoformat(),
-                "success": True
+                "success": True,
             }
 
         except Exception as e:
@@ -145,17 +147,13 @@ class SecretsRotation:
                 next_rotation_due=datetime.utcnow() + timedelta(days=1),  # Retry tomorrow
                 rotation_successful=False,
                 rotation_method="manual" if manual else "automatic",
-                notes=f"Rotation failed: {str(e)}"
+                notes=f"Rotation failed: {str(e)}",
             )
 
             db.add(rotation_log)
             await db.commit()
 
-            return {
-                "secret_type": secret_type.value,
-                "success": False,
-                "error": str(e)
-            }
+            return {"secret_type": secret_type.value, "success": False, "error": str(e)}
 
     def _get_secret_name(self, secret_type: SecretType) -> str:
         """Get Key Vault secret name for a secret type."""
@@ -165,19 +163,16 @@ class SecretsRotation:
             SecretType.JWT_SIGNING_KEY: "jwt-signing-key",
             SecretType.OKTA_API_TOKEN: "okta-api-token",
             SecretType.ENCRYPTION_KEY: "encryption-key",
-            SecretType.SERVICE_API_KEY: "service-api-key"
+            SecretType.SERVICE_API_KEY: "service-api-key",
         }
         return mapping.get(secret_type, secret_type.value)
 
-    async def check_rotation_due(
-        self,
-        db: AsyncSession
-    ) -> List[Dict[str, Any]]:
+    async def check_rotation_due(self, db: AsyncSession) -> List[Dict[str, Any]]:
         """Check which secrets are due for rotation.
-        
+
         Args:
             db: Database session
-            
+
         Returns:
             List of secrets that need rotation
         """
@@ -196,12 +191,14 @@ class SecretsRotation:
 
             if not last_rotation:
                 # Never rotated
-                due_secrets.append({
-                    "secret_type": secret_type.value,
-                    "status": "never_rotated",
-                    "days_overdue": None,
-                    "next_rotation_due": None
-                })
+                due_secrets.append(
+                    {
+                        "secret_type": secret_type.value,
+                        "status": "never_rotated",
+                        "days_overdue": None,
+                        "next_rotation_due": None,
+                    }
+                )
                 continue
 
             # Check if due
@@ -209,71 +206,70 @@ class SecretsRotation:
             days_until_due = (last_rotation.next_rotation_due - now).days
 
             if days_until_due <= 0:
-                due_secrets.append({
-                    "secret_type": secret_type.value,
-                    "status": "overdue",
-                    "days_overdue": abs(days_until_due),
-                    "last_rotated": last_rotation.rotated_at.isoformat(),
-                    "next_rotation_due": last_rotation.next_rotation_due.isoformat()
-                })
+                due_secrets.append(
+                    {
+                        "secret_type": secret_type.value,
+                        "status": "overdue",
+                        "days_overdue": abs(days_until_due),
+                        "last_rotated": last_rotation.rotated_at.isoformat(),
+                        "next_rotation_due": last_rotation.next_rotation_due.isoformat(),
+                    }
+                )
             elif days_until_due <= self.WARNING_DAYS_BEFORE:
-                due_secrets.append({
-                    "secret_type": secret_type.value,
-                    "status": "due_soon",
-                    "days_until_due": days_until_due,
-                    "last_rotated": last_rotation.rotated_at.isoformat(),
-                    "next_rotation_due": last_rotation.next_rotation_due.isoformat()
-                })
+                due_secrets.append(
+                    {
+                        "secret_type": secret_type.value,
+                        "status": "due_soon",
+                        "days_until_due": days_until_due,
+                        "last_rotated": last_rotation.rotated_at.isoformat(),
+                        "next_rotation_due": last_rotation.next_rotation_due.isoformat(),
+                    }
+                )
 
         return due_secrets
 
     async def rotate_all_due_secrets(self, db: AsyncSession) -> Dict[str, Any]:
         """Automatically rotate all secrets that are due.
-        
+
         Args:
             db: Database session
-            
+
         Returns:
             Summary of rotations
         """
         due_secrets = await self.check_rotation_due(db)
-        overdue = [s for s in due_secrets if s['status'] == 'overdue']
+        overdue = [s for s in due_secrets if s["status"] == "overdue"]
 
         results = []
 
         for secret in overdue:
-            secret_type = SecretType(secret['secret_type'])
+            secret_type = SecretType(secret["secret_type"])
             result = await self.rotate_secret(db, secret_type, manual=False)
             results.append(result)
 
-        successful = sum(1 for r in results if r['success'])
+        successful = sum(1 for r in results if r["success"])
 
         logger.info(
-            "Automatic rotation complete: total=%d, successful=%d",
-            len(results),
-            successful
+            "Automatic rotation complete: total=%d, successful=%d", len(results), successful
         )
 
         return {
             "total_rotations": len(results),
             "successful_rotations": successful,
             "failed_rotations": len(results) - successful,
-            "results": results
+            "results": results,
         }
 
     async def get_rotation_history(
-        self,
-        db: AsyncSession,
-        secret_type: Optional[SecretType] = None,
-        days: int = 90
+        self, db: AsyncSession, secret_type: Optional[SecretType] = None, days: int = 90
     ) -> List[Dict[str, Any]]:
         """Get rotation history.
-        
+
         Args:
             db: Database session
             secret_type: Filter by secret type (optional)
             days: Number of days of history
-            
+
         Returns:
             List of rotation records
         """
@@ -296,7 +292,7 @@ class SecretsRotation:
                 "next_rotation_due": record.next_rotation_due.isoformat(),
                 "successful": record.rotation_successful,
                 "method": record.rotation_method,
-                "notes": record.notes
+                "notes": record.notes,
             }
             for record in records
         ]

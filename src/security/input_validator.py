@@ -1,4 +1,5 @@
 """Input validation with 32 attack pattern detection (SQL, XSS, LDAP, Path Traversal, etc.)."""
+
 import logging
 import re
 from enum import Enum
@@ -9,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class AttackType(str, Enum):
     """Types of attacks that can be detected."""
+
     SQL_INJECTION = "sql_injection"
     XSS = "xss"
     LDAP_INJECTION = "ldap_injection"
@@ -49,7 +51,7 @@ class InputValidator:
         r"(@@version)",
         r"(CAST\s*\()",
         r"(CONVERT\s*\()",
-        r"(SUBSTRING\s*\()"
+        r"(SUBSTRING\s*\()",
     ]
 
     # 10 XSS (Cross-Site Scripting) Patterns
@@ -63,17 +65,11 @@ class InputValidator:
         r"(<iframe[^>]*>)",
         r"(<embed[^>]*>)",
         r"(<object[^>]*>)",
-        r"(data:text/html)"
+        r"(data:text/html)",
     ]
 
     # LDAP Injection Patterns
-    LDAP_PATTERNS = [
-        r"(\*\s*\))",
-        r"(\|\s*\()",
-        r"(&\s*\()",
-        r"(\(\s*\|)",
-        r"(\(\s*&)"
-    ]
+    LDAP_PATTERNS = [r"(\*\s*\))", r"(\|\s*\()", r"(&\s*\()", r"(\(\s*\|)", r"(\(\s*&)"]
 
     # Path Traversal Patterns
     PATH_TRAVERSAL_PATTERNS = [
@@ -82,7 +78,7 @@ class InputValidator:
         r"(%2e%2e[/\\])",
         r"(/etc/passwd)",
         r"(c:\\windows)",
-        r"(/proc/self)"
+        r"(/proc/self)",
     ]
 
     # Command Injection Patterns
@@ -93,7 +89,7 @@ class InputValidator:
         r"(\bpython\b.*-c)",
         r"(\bperl\b.*-e)",
         r"(\bphp\b.*-r)",
-        r"(/bin/(bash|sh|zsh))"
+        r"(/bin/(bash|sh|zsh))",
     ]
 
     # SSRF (Server-Side Request Forgery) Patterns
@@ -101,24 +97,14 @@ class InputValidator:
         r"(localhost|127\.0\.0\.1|0\.0\.0\.0)",
         r"(169\.254\.169\.254)",  # AWS metadata
         r"(::1)",  # IPv6 localhost
-        r"(file://|gopher://|dict://)"
+        r"(file://|gopher://|dict://)",
     ]
 
     # XXE (XML External Entity) Patterns
-    XXE_PATTERNS = [
-        r"(<!ENTITY)",
-        r"(<!DOCTYPE.*\[)",
-        r"(SYSTEM\s+[\"'])",
-        r"(PUBLIC\s+[\"'])"
-    ]
+    XXE_PATTERNS = [r"(<!ENTITY)", r"(<!DOCTYPE.*\[)", r"(SYSTEM\s+[\"'])", r"(PUBLIC\s+[\"'])"]
 
     # ReDoS (Regular Expression Denial of Service) Patterns
-    REDOS_PATTERNS = [
-        r"(.+\*)+",
-        r"(.*)+",
-        r"(.+)+",
-        r"(\w+\*)+\w"
-    ]
+    REDOS_PATTERNS = [r"(.+\*)+", r"(.*)+", r"(.+)+", r"(\w+\*)+\w"]
 
     def __init__(self) -> None:
         """Initialize input validator."""
@@ -129,19 +115,25 @@ class InputValidator:
         self.sql_regexes = [re.compile(p, re.IGNORECASE) for p in self.SQL_PATTERNS]
         self.xss_regexes = [re.compile(p, re.IGNORECASE) for p in self.XSS_PATTERNS]
         self.ldap_regexes = [re.compile(p, re.IGNORECASE) for p in self.LDAP_PATTERNS]
-        self.path_traversal_regexes = [re.compile(p, re.IGNORECASE) for p in self.PATH_TRAVERSAL_PATTERNS]
-        self.command_injection_regexes = [re.compile(p, re.IGNORECASE) for p in self.COMMAND_INJECTION_PATTERNS]
+        self.path_traversal_regexes = [
+            re.compile(p, re.IGNORECASE) for p in self.PATH_TRAVERSAL_PATTERNS
+        ]
+        self.command_injection_regexes = [
+            re.compile(p, re.IGNORECASE) for p in self.COMMAND_INJECTION_PATTERNS
+        ]
         self.ssrf_regexes = [re.compile(p, re.IGNORECASE) for p in self.SSRF_PATTERNS]
         self.xxe_regexes = [re.compile(p, re.IGNORECASE) for p in self.XXE_PATTERNS]
         self.redos_regexes = [re.compile(p, re.IGNORECASE) for p in self.REDOS_PATTERNS]
 
-    def validate(self, input_str: str, check_types: Optional[List[AttackType]] = None) -> Tuple[bool, List[str]]:
+    def validate(
+        self, input_str: str, check_types: Optional[List[AttackType]] = None
+    ) -> Tuple[bool, List[str]]:
         """Validate input against attack patterns.
-        
+
         Args:
             input_str: User input to validate
             check_types: Specific attack types to check (default: all)
-            
+
         Returns:
             Tuple of (is_safe, list_of_detected_attacks)
         """
@@ -158,7 +150,11 @@ class InputValidator:
             for regex in self.sql_regexes:
                 if regex.search(input_str):
                     detected_attacks.append(f"SQL Injection: {regex.pattern}")
-                    logger.warning("SQL injection detected: pattern=%s, input=%s", regex.pattern, input_str[:100])
+                    logger.warning(
+                        "SQL injection detected: pattern=%s, input=%s",
+                        regex.pattern,
+                        input_str[:100],
+                    )
                     break
 
         # Check XSS
@@ -166,7 +162,9 @@ class InputValidator:
             for regex in self.xss_regexes:
                 if regex.search(input_str):
                     detected_attacks.append(f"XSS: {regex.pattern}")
-                    logger.warning("XSS detected: pattern=%s, input=%s", regex.pattern, input_str[:100])
+                    logger.warning(
+                        "XSS detected: pattern=%s, input=%s", regex.pattern, input_str[:100]
+                    )
                     break
 
         # Check LDAP Injection
@@ -227,10 +225,10 @@ class InputValidator:
 
     def sanitize_sql(self, input_str: str) -> str:
         """Sanitize input for SQL queries.
-        
+
         Args:
             input_str: Input to sanitize
-            
+
         Returns:
             Sanitized string
         """
@@ -245,22 +243,23 @@ class InputValidator:
 
     def sanitize_html(self, input_str: str) -> str:
         """Sanitize input for HTML output (prevent XSS).
-        
+
         Args:
             input_str: Input to sanitize
-            
+
         Returns:
             Sanitized string
         """
         import html
+
         return html.escape(input_str)
 
     def sanitize_filename(self, filename: str) -> str:
         """Sanitize filename to prevent path traversal.
-        
+
         Args:
             filename: Filename to sanitize
-            
+
         Returns:
             Safe filename
         """
@@ -269,28 +268,28 @@ class InputValidator:
         filename = filename.replace("/", "").replace("\\", "")
 
         # Remove dangerous characters
-        filename = re.sub(r'[<>:"|?*]', '', filename)
+        filename = re.sub(r'[<>:"|?*]', "", filename)
 
         return filename
 
     def validate_email(self, email: str) -> bool:
         """Validate email address format.
-        
+
         Args:
             email: Email address to validate
-            
+
         Returns:
             True if valid email format
         """
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, email))
 
     def validate_url(self, url: str) -> bool:
         """Validate URL format and check for SSRF.
-        
+
         Args:
             url: URL to validate
-            
+
         Returns:
             True if safe URL
         """
@@ -300,24 +299,24 @@ class InputValidator:
             return False
 
         # Check basic URL format
-        pattern = r'^https?://'
+        pattern = r"^https?://"
         return bool(re.match(pattern, url))
 
     def count_total_patterns(self) -> int:
         """Count total number of attack patterns.
-        
+
         Returns:
             Total pattern count
         """
         return (
-            len(self.SQL_PATTERNS) +
-            len(self.XSS_PATTERNS) +
-            len(self.LDAP_PATTERNS) +
-            len(self.PATH_TRAVERSAL_PATTERNS) +
-            len(self.COMMAND_INJECTION_PATTERNS) +
-            len(self.SSRF_PATTERNS) +
-            len(self.XXE_PATTERNS) +
-            len(self.REDOS_PATTERNS)
+            len(self.SQL_PATTERNS)
+            + len(self.XSS_PATTERNS)
+            + len(self.LDAP_PATTERNS)
+            + len(self.PATH_TRAVERSAL_PATTERNS)
+            + len(self.COMMAND_INJECTION_PATTERNS)
+            + len(self.SSRF_PATTERNS)
+            + len(self.XXE_PATTERNS)
+            + len(self.REDOS_PATTERNS)
         )
 
 
@@ -330,5 +329,7 @@ def get_input_validator() -> InputValidator:
     global _validator
     if _validator is None:
         _validator = InputValidator()
-        logger.info("Input validator initialized with %d patterns", _validator.count_total_patterns())
+        logger.info(
+            "Input validator initialized with %d patterns", _validator.count_total_patterns()
+        )
     return _validator
