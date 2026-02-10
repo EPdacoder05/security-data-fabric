@@ -1,24 +1,25 @@
 """SQLAlchemy models for Security Data Fabric."""
 import uuid
 from datetime import datetime
-from typing import Optional
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Float,
-    Boolean,
-    DateTime,
-    Text,
     JSON,
-    Index,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
     ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy import (
     Enum as SQLEnum,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from pgvector.sqlalchemy import Vector
 
 from src.database.connection import Base
 
