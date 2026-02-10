@@ -217,7 +217,7 @@ class InputValidator:
                         detected_attacks.append(f"ReDoS: {regex.pattern}")
                         logger.warning("ReDoS pattern detected")
                         break
-                except:
+                except Exception:
                     # Pattern itself might cause ReDoS
                     pass
 

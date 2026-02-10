@@ -75,7 +75,7 @@ class IncidentForecaster:
         df['trend'] = (df['timestamp'] - df['timestamp'].min()).dt.days
 
         # Fill NaN values from lag features
-        df = df.fillna(method='bfill').fillna(0)
+        df = df.bfill().fillna(0)
 
         return df
 

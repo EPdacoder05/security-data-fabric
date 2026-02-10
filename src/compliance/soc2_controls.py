@@ -295,7 +295,7 @@ class ComplianceControlVerifier:
 
 
 # Global verifier instance
-_verifier: Optional['ComplianceControlVerifier'] = None
+_verifier: Optional[ComplianceControlVerifier] = None
 
 
 def get_compliance_verifier() -> ComplianceControlVerifier:

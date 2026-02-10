@@ -109,7 +109,7 @@ class TokenRotation:
         result = await db.execute(
             select(RefreshToken)
             .where(RefreshToken.token_hash == token_hash)
-            .where(RefreshToken.revoked == False)  # noqa: E712
+            .where(RefreshToken.revoked.is_(False))
         )
         db_token = result.scalar_one_or_none()
 
@@ -185,7 +185,7 @@ class TokenRotation:
         result = await db.execute(
             update(RefreshToken)
             .where(RefreshToken.token_hash == token_hash)
-            .where(RefreshToken.revoked == False)  # noqa: E712
+            .where(RefreshToken.revoked.is_(False))
             .values(revoked=True)
         )
 
@@ -213,7 +213,7 @@ class TokenRotation:
         result = await db.execute(
             update(RefreshToken)
             .where(RefreshToken.user_id == user_uuid)
-            .where(RefreshToken.revoked == False)  # noqa: E712
+            .where(RefreshToken.revoked.is_(False))
             .values(revoked=True)
         )
 
@@ -237,7 +237,7 @@ class TokenRotation:
         result = await db.execute(
             update(RefreshToken)
             .where(RefreshToken.expires_at < datetime.utcnow())
-            .where(RefreshToken.revoked == False)  # noqa: E712
+            .where(RefreshToken.revoked.is_(False))
             .values(revoked=True)
         )
 
