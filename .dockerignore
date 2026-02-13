@@ -1,0 +1,125 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# Python cache and compiled files
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+dist
+build
+eggs
+.eggs
+lib
+lib64
+parts
+sdist
+var
+wheels
+pip-wheel-metadata
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv
+
+# Testing
+tests/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Documentation
+docs/
+*.md
+!README.md
+*.rst
+*.txt
+!requirements.txt
+
+# Environment files
+.env
+.env.*
+.envrc
+*.env
+
+# Logs
+logs/
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS files
+.DS_Store
+Thumbs.db
+.directory
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Development configs
+docker-compose.override.yml
+docker-compose.dev.yml
+.dockerignore
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Linting and formatting
+.mypy_cache/
+.ruff_cache/
+.bandit
+.pylintrc
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials/
+
+# Monitoring and metrics
+prometheus_data/
+grafana_data/

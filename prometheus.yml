@@ -1,0 +1,93 @@
+# Prometheus Configuration for Security Data Fabric
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'security-data-fabric'
+    environment: 'production'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Rule files for alerting
+# rule_files:
+#   - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Security Data Fabric API
+  - job_name: 'security-fabric-api'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    scheme: http
+    static_configs:
+      - targets:
+          - 'app:8000'
+        labels:
+          service: 'api'
+          component: 'security-fabric'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '${1}'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+        labels:
+          service: 'prometheus'
+          component: 'monitoring'
+
+  # PostgreSQL Exporter (optional - requires postgres_exporter)
+  # - job_name: 'postgres'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets:
+  #         - 'postgres-exporter:9187'
+  #       labels:
+  #         service: 'postgres'
+  #         component: 'database'
+
+  # Redis Exporter (optional - requires redis_exporter)
+  # - job_name: 'redis'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets:
+  #         - 'redis-exporter:9121'
+  #       labels:
+  #         service: 'redis'
+  #         component: 'cache'
+
+  # Node Exporter (optional - for host metrics)
+  # - job_name: 'node'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets:
+  #         - 'node-exporter:9100'
+  #       labels:
+  #         service: 'node'
+  #         component: 'host'
+
+# Optional: Remote write configuration for long-term storage
+# remote_write:
+#   - url: "https://your-remote-storage/api/v1/write"
+#     basic_auth:
+#       username: "user"
+#       password: "pass"
+
+# Optional: Remote read configuration
+# remote_read:
+#   - url: "https://your-remote-storage/api/v1/read"
+#     basic_auth:
+#       username: "user"
+#       password: "pass"
