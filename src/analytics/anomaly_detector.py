@@ -22,10 +22,7 @@ class AnomalyDetector:
     """
 
     def __init__(
-        self,
-        contamination: float = 0.1,
-        n_estimators: int = 100,
-        random_state: int = 42
+        self, contamination: float = 0.1, n_estimators: int = 100, random_state: int = 42
     ) -> None:
         """Initialize the anomaly detector.
 
@@ -38,7 +35,7 @@ class AnomalyDetector:
             contamination=contamination,
             n_estimators=n_estimators,
             random_state=random_state,
-            n_jobs=-1
+            n_jobs=-1,
         )
         self.scaler = StandardScaler()
         self.feature_names: Optional[List[str]] = None
@@ -46,9 +43,7 @@ class AnomalyDetector:
         self.contamination = contamination
 
     async def train(
-        self,
-        features: pd.DataFrame,
-        feature_columns: Optional[List[str]] = None
+        self, features: pd.DataFrame, feature_columns: Optional[List[str]] = None
     ) -> None:
         """Train the anomaly detection model on historical data.
 
@@ -73,10 +68,7 @@ class AnomalyDetector:
         self.model.fit(X_scaled)
         self.trained = True
 
-    async def detect(
-        self,
-        features: pd.DataFrame
-    ) -> Dict[str, Any]:
+    async def detect(self, features: pd.DataFrame) -> Dict[str, Any]:
         """Detect anomalies in new data.
 
         Args:
@@ -113,16 +105,13 @@ class AnomalyDetector:
         anomaly_indices = np.where(is_anomaly)[0].tolist()
 
         return {
-            'predictions': predictions.tolist(),
-            'scores': scores.tolist(),
-            'is_anomaly': is_anomaly.tolist(),
-            'anomaly_indices': anomaly_indices
+            "predictions": predictions.tolist(),
+            "scores": scores.tolist(),
+            "is_anomaly": is_anomaly.tolist(),
+            "anomaly_indices": anomaly_indices,
         }
 
-    async def get_anomaly_score(
-        self,
-        features: Dict[str, float]
-    ) -> float:
+    async def get_anomaly_score(self, features: Dict[str, float]) -> float:
         """Calculate anomaly score for a single data point.
 
         Args:
@@ -149,9 +138,7 @@ class AnomalyDetector:
         return float(score)
 
     async def detect_realtime(
-        self,
-        features: Dict[str, float],
-        threshold: Optional[float] = None
+        self, features: Dict[str, float], threshold: Optional[float] = None
     ) -> Dict[str, Any]:
         """Real-time anomaly detection for a single event.
 
@@ -177,10 +164,10 @@ class AnomalyDetector:
         confidence = await self._calculate_confidence(score)
 
         return {
-            'is_anomaly': is_anomaly,
-            'score': float(score),
-            'severity': severity,
-            'confidence': confidence
+            "is_anomaly": is_anomaly,
+            "score": float(score),
+            "severity": severity,
+            "confidence": confidence,
         }
 
     async def _calculate_severity(self, score: float) -> int:
@@ -216,9 +203,7 @@ class AnomalyDetector:
         return float(np.clip(confidence, 0.0, 1.0))
 
     async def explain_anomaly(
-        self,
-        features: Dict[str, float],
-        top_n: int = 5
+        self, features: Dict[str, float], top_n: int = 5
     ) -> List[Dict[str, Any]]:
         """Explain which features contributed most to anomaly detection.
 
@@ -241,14 +226,16 @@ class AnomalyDetector:
         contributions = []
         for i, feature_name in enumerate(self.feature_names):
             z_score = abs((feature_values[i] - mean_values[i]) / std_values[i])
-            contributions.append({
-                'feature': feature_name,
-                'value': float(feature_values[i]),
-                'z_score': float(z_score),
-                'contribution': float(z_score)
-            })
+            contributions.append(
+                {
+                    "feature": feature_name,
+                    "value": float(feature_values[i]),
+                    "z_score": float(z_score),
+                    "contribution": float(z_score),
+                }
+            )
 
-        contributions.sort(key=lambda x: x['contribution'], reverse=True)
+        contributions.sort(key=lambda x: x["contribution"], reverse=True)
         return contributions[:top_n]
 
     async def get_statistics(self) -> Dict[str, Any]:
@@ -264,9 +251,9 @@ class AnomalyDetector:
             raise RuntimeError("Model must be trained first")
 
         return {
-            'trained': self.trained,
-            'n_estimators': self.model.n_estimators,
-            'contamination': self.contamination,
-            'n_features': len(self.feature_names) if self.feature_names else 0,
-            'feature_names': self.feature_names or []
+            "trained": self.trained,
+            "n_estimators": self.model.n_estimators,
+            "contamination": self.contamination,
+            "n_features": len(self.feature_names) if self.feature_names else 0,
+            "feature_names": self.feature_names or [],
         }

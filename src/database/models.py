@@ -148,9 +148,7 @@ class Alert(Base):
     send_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
-    __table_args__ = (
-        Index("idx_alerts_dedupe", "dedupe_key", "last_sent_at"),
-    )
+    __table_args__ = (Index("idx_alerts_dedupe", "dedupe_key", "last_sent_at"),)
 
 
 class IncidentTimeline(Base):
@@ -167,9 +165,7 @@ class IncidentTimeline(Base):
     correlation_score = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    __table_args__ = (
-        Index("idx_timeline_incident_timestamp", "incident_id", "timestamp"),
-    )
+    __table_args__ = (Index("idx_timeline_incident_timestamp", "incident_id", "timestamp"),)
 
 
 class AuditLog(Base):
@@ -229,9 +225,7 @@ class RefreshToken(Base):
     replaced_by = Column(UUID(as_uuid=True), ForeignKey("refresh_tokens.id"))
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    __table_args__ = (
-        Index("idx_refresh_token_user_revoked", "user_id", "revoked"),
-    )
+    __table_args__ = (Index("idx_refresh_token_user_revoked", "user_id", "revoked"),)
 
 
 class Anomaly(Base):
@@ -247,9 +241,7 @@ class Anomaly(Base):
     detected_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     severity = Column(Integer, nullable=False)
 
-    __table_args__ = (
-        Index("idx_anomaly_score_time", "anomaly_score", "detected_at"),
-    )
+    __table_args__ = (Index("idx_anomaly_score_time", "anomaly_score", "detected_at"),)
 
 
 class SLATracking(Base):
@@ -267,6 +259,4 @@ class SLATracking(Base):
     resolved_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    __table_args__ = (
-        Index("idx_sla_incident_sla_met", "incident_id", "sla_met"),
-    )
+    __table_args__ = (Index("idx_sla_incident_sla_met", "incident_id", "sla_met"),)

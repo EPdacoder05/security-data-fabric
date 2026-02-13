@@ -57,9 +57,7 @@ def get_rate_limiter() -> Callable:
 
         # Clean old requests outside window
         _rate_limit_store[client_id] = [
-            req_time
-            for req_time in _rate_limit_store[client_id]
-            if req_time > window_start
+            req_time for req_time in _rate_limit_store[client_id] if req_time > window_start
         ]
 
         # Check rate limit
@@ -122,9 +120,9 @@ async def metrics_middleware(request: Request, call_next: Callable) -> Response:
     # Track request size
     content_length = request.headers.get("content-length")
     if content_length:
-        metrics.api_request_size.labels(
-            method=request.method, endpoint=request.url.path
-        ).observe(int(content_length))
+        metrics.api_request_size.labels(method=request.method, endpoint=request.url.path).observe(
+            int(content_length)
+        )
 
     try:
         response = await call_next(request)

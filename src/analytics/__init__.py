@@ -16,5 +16,5 @@ __all__ = [
     "ComplianceStatus",
     "SLATracker",
     "SLASeverity",
-    "SLAStatus"
+    "SLAStatus",
 ]

@@ -67,9 +67,7 @@ class CircuitBreaker:
 
         if self.failure_count >= self.failure_threshold:
             if self.state != ConnectionState.OPEN:
-                logger.warning(
-                    f"Circuit breaker opened after {self.failure_count} failures"
-                )
+                logger.warning(f"Circuit breaker opened after {self.failure_count} failures")
                 self.state = ConnectionState.OPEN
 
     def can_execute(self) -> bool:
@@ -222,9 +220,7 @@ class BaseConnector(ABC):
         """
         # Check circuit breaker
         if self._circuit_breaker and not self._circuit_breaker.can_execute():
-            raise RuntimeError(
-                f"Circuit breaker is open for {self.__class__.__name__}"
-            )
+            raise RuntimeError(f"Circuit breaker is open for {self.__class__.__name__}")
 
         if not self._client:
             self._client = await self._create_client()
@@ -249,9 +245,7 @@ class BaseConnector(ABC):
 
             except httpx.HTTPError as e:
                 last_exception = e
-                logger.warning(
-                    f"Request failed (attempt {attempt + 1}/{self.max_retries}): {e}"
-                )
+                logger.warning(f"Request failed (attempt {attempt + 1}/{self.max_retries}): {e}")
 
                 # Record failure with circuit breaker
                 if self._circuit_breaker:
@@ -262,9 +256,7 @@ class BaseConnector(ABC):
                     break
 
         # All retries failed
-        raise RuntimeError(
-            f"Request failed after {self.max_retries} attempts: {last_exception}"
-        )
+        raise RuntimeError(f"Request failed after {self.max_retries} attempts: {last_exception}")
 
     async def _get(
         self,
@@ -299,9 +291,7 @@ class BaseConnector(ABC):
         Returns:
             Response JSON data
         """
-        response = await self._execute_request(
-            "POST", endpoint, params=params, json_data=json_data
-        )
+        response = await self._execute_request("POST", endpoint, params=params, json_data=json_data)
         return response.json()
 
     async def _put(
@@ -320,9 +310,7 @@ class BaseConnector(ABC):
         Returns:
             Response JSON data
         """
-        response = await self._execute_request(
-            "PUT", endpoint, params=params, json_data=json_data
-        )
+        response = await self._execute_request("PUT", endpoint, params=params, json_data=json_data)
         return response.json()
 
     async def _delete(

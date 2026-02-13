@@ -221,9 +221,7 @@ class PrometheusMetrics:
             registry=registry,
         )
 
-    def track_api_request(
-        self, method: str, endpoint: str, status: int, duration: float
-    ) -> None:
+    def track_api_request(self, method: str, endpoint: str, status: int, duration: float) -> None:
         """Track an API request.
 
         Args:

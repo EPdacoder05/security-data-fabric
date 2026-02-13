@@ -147,15 +147,11 @@ class AuditLogManager:
         """
         db_session = session or self._session
         if db_session:
-            result = await db_session.execute(
-                select(AuditLog).where(AuditLog.id == log_id)
-            )
+            result = await db_session.execute(select(AuditLog).where(AuditLog.id == log_id))
             return result.scalar_one_or_none()
         else:
             async with get_db_context() as db_session:
-                result = await db_session.execute(
-                    select(AuditLog).where(AuditLog.id == log_id)
-                )
+                result = await db_session.execute(select(AuditLog).where(AuditLog.id == log_id))
                 return result.scalar_one_or_none()
 
     async def get_logs_by_user(
@@ -303,8 +299,10 @@ class AuditLogManager:
         """
         db_session = session or self._session
 
-        query = select(AuditLog).where(AuditLog.request_id == request_id).order_by(
-            AuditLog.timestamp.asc()
+        query = (
+            select(AuditLog)
+            .where(AuditLog.request_id == request_id)
+            .order_by(AuditLog.timestamp.asc())
         )
 
         if db_session:

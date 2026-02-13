@@ -114,9 +114,7 @@ class MFAService:
 
         secret = pyotp.random_base32()
         totp = pyotp.TOTP(secret)
-        qr_code_url = totp.provisioning_uri(
-            name=user_id, issuer_name="Security Data Fabric"
-        )
+        qr_code_url = totp.provisioning_uri(name=user_id, issuer_name="Security Data Fabric")
 
         await self._store_totp_secret(user_id, secret)
         logger.info("TOTP setup completed for user_id=%s", user_id)

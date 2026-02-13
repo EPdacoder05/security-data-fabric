@@ -33,9 +33,7 @@ class SecretsManager:
                 logger.error("Failed to initialize Azure Key Vault client: %s", str(e))
                 self.client = None
 
-    async def get_secret(
-        self, secret_name: str, env_name: Optional[str] = None
-    ) -> Optional[str]:
+    async def get_secret(self, secret_name: str, env_name: Optional[str] = None) -> Optional[str]:
         """Get a secret from Azure Key Vault or environment variable.
 
         Args:

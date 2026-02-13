@@ -303,9 +303,7 @@ class ServiceNowConnector(BaseConnector):
         logger.info(f"Fetching problems with params: {params}")
         return await self.fetch_data("problem", params=params)
 
-    async def get_incident_by_number(
-        self, incident_number: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_incident_by_number(self, incident_number: str) -> Optional[Dict[str, Any]]:
         """Get a specific incident by its number.
 
         Args:
@@ -326,9 +324,7 @@ class ServiceNowConnector(BaseConnector):
             logger.error(f"Error fetching incident {incident_number}: {e}")
             return None
 
-    async def get_change_by_number(
-        self, change_number: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_change_by_number(self, change_number: str) -> Optional[Dict[str, Any]]:
         """Get a specific change request by its number.
 
         Args:
@@ -349,9 +345,7 @@ class ServiceNowConnector(BaseConnector):
             logger.error(f"Error fetching change {change_number}: {e}")
             return None
 
-    async def get_problem_by_number(
-        self, problem_number: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_problem_by_number(self, problem_number: str) -> Optional[Dict[str, Any]]:
         """Get a specific problem by its number.
 
         Args:

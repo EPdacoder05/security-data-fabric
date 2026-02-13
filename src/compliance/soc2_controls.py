@@ -342,9 +342,7 @@ class SOC2Controls:
         """
         return self.controls.get(control_id)
 
-    def get_controls_by_criteria(
-        self, criteria: TrustServiceCriteria
-    ) -> List[SOC2Control]:
+    def get_controls_by_criteria(self, criteria: TrustServiceCriteria) -> List[SOC2Control]:
         """Get all controls for a specific criteria.
 
         Args:
@@ -432,9 +430,7 @@ class SOC2Controls:
 
         # Check if evidence is collected
         evidence_list = self.get_evidence(control_id)
-        missing_evidence = set(control.evidence_required) - {
-            e.evidence_type for e in evidence_list
-        }
+        missing_evidence = set(control.evidence_required) - {e.evidence_type for e in evidence_list}
         if missing_evidence:
             issues.append(f"Missing required evidence: {', '.join(missing_evidence)}")
 
@@ -494,9 +490,7 @@ class SOC2Controls:
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_controls": total_controls,
             "compliance_percentage": round(compliance_percentage, 2),
-            "status_breakdown": {
-                status.value: count for status, count in status_counts.items()
-            },
+            "status_breakdown": {status.value: count for status, count in status_counts.items()},
             "criteria_breakdown": {
                 criteria.value: count for criteria, count in criteria_counts.items()
             },
