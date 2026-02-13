@@ -127,7 +127,7 @@ class SLATracker:
         sla_record = self.active_slas[incident_id]
         
         if current_time is None:
-            current_time = datetime.utcnow()
+            current_time = datetime.now(timezone.utc)
             
         created_at = sla_record['created_at']
         target_time = sla_record['target_time']
