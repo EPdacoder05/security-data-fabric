@@ -301,7 +301,7 @@ class TestMFAService:
         code = "123456"
         stored_code = {
             "code": code,
-            "expires_at": datetime.utcnow() + timedelta(minutes=5),
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
         }
         
         with patch.object(
@@ -317,7 +317,7 @@ class TestMFAService:
         """Test verification with incorrect code."""
         stored_code = {
             "code": "123456",
-            "expires_at": datetime.utcnow() + timedelta(minutes=5),
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
         }
         
         with patch.object(
@@ -332,7 +332,7 @@ class TestMFAService:
         """Test verification with expired code."""
         stored_code = {
             "code": "123456",
-            "expires_at": datetime.utcnow() - timedelta(minutes=5),
+            "expires_at": datetime.now(timezone.utc) - timedelta(minutes=5),
         }
         
         with patch.object(
@@ -600,7 +600,7 @@ class TestSecretsRotation:
     @pytest.mark.asyncio
     async def test_check_rotation_needed_old_secret(self) -> None:
         """Test rotation check for old secret."""
-        old_date = datetime.utcnow() - timedelta(days=100)
+        old_date = datetime.now(timezone.utc) - timedelta(days=100)
         
         with patch.object(
             self.rotation_manager,
@@ -615,7 +615,7 @@ class TestSecretsRotation:
     @pytest.mark.asyncio
     async def test_check_rotation_needed_recent_secret(self) -> None:
         """Test rotation check for recently rotated secret."""
-        recent_date = datetime.utcnow() - timedelta(days=30)
+        recent_date = datetime.now(timezone.utc) - timedelta(days=30)
         
         with patch.object(
             self.rotation_manager,

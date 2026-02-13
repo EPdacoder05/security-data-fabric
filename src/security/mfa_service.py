@@ -6,7 +6,7 @@ NO PII (phone numbers, email addresses) is logged for security compliance.
 
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from src.config.settings import settings
@@ -89,7 +89,7 @@ class MFAService:
                 logger.warning("Invalid code provided for user_id=%s", user_id)
                 return False
 
-            if datetime.utcnow() > stored_code["expires_at"]:
+            if datetime.now(timezone.utc) > stored_code["expires_at"]:
                 logger.warning("Expired code provided for user_id=%s", user_id)
                 await self._delete_stored_code(user_id)
                 return False

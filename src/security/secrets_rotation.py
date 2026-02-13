@@ -4,7 +4,7 @@ This module handles automatic 90-day rotation of secrets including database pass
 API tokens, and encryption keys.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional
 
@@ -43,7 +43,7 @@ class SecretRotationManager:
         if not last_rotation:
             return True
 
-        days_since_rotation = (datetime.utcnow() - last_rotation).days
+        days_since_rotation = (datetime.now(timezone.utc) - last_rotation).days
         return days_since_rotation >= self.rotation_interval_days
 
     async def rotate_secret(self, secret_type: SecretType) -> bool:
