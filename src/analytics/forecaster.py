@@ -115,6 +115,9 @@ class TimeSeriesForecaster:
         last_idx = len(self.historical_data)
         future_indices = np.arange(last_idx, last_idx + periods)
 
+        if self.trend_params is None:
+            raise RuntimeError("Model must be trained before forecasting")
+
         predictions_scaled = (
             self.trend_params["slope"] * future_indices + self.trend_params["intercept"]
         )

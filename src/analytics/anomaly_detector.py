@@ -219,7 +219,6 @@ class AnomalyDetector:
             raise RuntimeError("Model must be trained before explanation")
 
         feature_values = [features[col] for col in self.feature_names]
-        scaled_values = self.scaler.transform([feature_values])[0]
 
         mean_values = self.scaler.mean_
         std_values = self.scaler.scale_

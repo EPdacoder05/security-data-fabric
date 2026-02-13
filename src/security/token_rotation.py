@@ -168,8 +168,8 @@ class TokenRotationManager:
                     if token_data and token_data.get("service_id") == service_id:
                         await self._cache.delete(key_str)
                         count += 1
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("Error invalidating tokens for service %s: %s", service_id, str(e))
 
         return count
 

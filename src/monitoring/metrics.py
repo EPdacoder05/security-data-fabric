@@ -276,7 +276,7 @@ class PrometheusMetrics:
             cache_type=cache_type, key_pattern=key_pattern
         )._value.get()
         total = hits + misses
-        return hits / total if total > 0 else 0.0
+        return float(hits / total) if total > 0 else 0.0
 
     def track_auth_attempt(
         self, auth_type: str, status: str, success: bool, reason: Optional[str] = None
@@ -331,18 +331,16 @@ class PrometheusMetrics:
         Returns:
             Dictionary containing current metric values
         """
+        api_samples = list(self.api_request_count.collect()[0].samples)
+        anomaly_samples = list(self.anomalies_detected.collect()[0].samples)
+        sla_samples = list(self.sla_breaches.collect()[0].samples)
+        
         return {
-            "api_requests_total": sum(
-                [s._value.get() for s in self.api_request_count.collect()[0].samples]
-            ),
+            "api_requests_total": float(sum([s._value.get() for s in api_samples])),
             "cache_hit_rate": self.get_cache_hit_rate("redis", "*"),
-            "active_sessions": self.active_sessions._value.get(),
-            "anomalies_total": sum(
-                [s._value.get() for s in self.anomalies_detected.collect()[0].samples]
-            ),
-            "sla_breaches_total": sum(
-                [s._value.get() for s in self.sla_breaches.collect()[0].samples]
-            ),
+            "active_sessions": float(self.active_sessions._value.get()),
+            "anomalies_total": float(sum([s._value.get() for s in anomaly_samples])),
+            "sla_breaches_total": float(sum([s._value.get() for s in sla_samples])),
         }
 
 

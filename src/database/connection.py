@@ -14,7 +14,6 @@ from sqlalchemy.pool import NullPool, QueuePool
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import DeclarativeBase
-    from sqlalchemy.orm import declarative_base as declarative_base_type
 else:
     from sqlalchemy.orm import declarative_base
 

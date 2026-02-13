@@ -290,7 +290,9 @@ class ZeroDayShield:
 
         return False
 
-    async def protected_call(self, service_name: str, func: Callable, *args, **kwargs) -> Any:
+    async def protected_call(
+        self, service_name: str, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """Execute function with circuit breaker protection.
 
         Args:
