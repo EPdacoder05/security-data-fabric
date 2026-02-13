@@ -1,6 +1,6 @@
 """Audit log operations for compliance and security tracking."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -112,7 +112,7 @@ class AuditLogManager:
             changes.update(additional_data)
 
         log = AuditLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             user_id=user_id,
             action=action,
             resource_type=resource_type,
@@ -395,7 +395,7 @@ class AuditLogManager:
         Returns:
             List of failed login AuditLog instances
         """
-        start_date = datetime.utcnow() - timedelta(hours=hours)
+        start_date = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         return await self.search_logs(
             user_id=user_id,

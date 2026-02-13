@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -62,7 +62,7 @@ class CircuitBreaker:
     def record_failure(self) -> None:
         """Record a failed operation."""
         self.failure_count += 1
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = datetime.now(timezone.utc)
         self.success_count = 0
 
         if self.failure_count >= self.failure_threshold:
@@ -84,7 +84,7 @@ class CircuitBreaker:
         if self.state == ConnectionState.OPEN:
             # Check if recovery timeout has passed
             if self.last_failure_time:
-                elapsed = (datetime.utcnow() - self.last_failure_time).total_seconds()
+                elapsed = (datetime.now(timezone.utc) - self.last_failure_time).total_seconds()
                 if elapsed >= self.recovery_timeout:
                     logger.info("Circuit breaker entering half-open state for recovery test")
                     self.state = ConnectionState.HALF_OPEN

@@ -1,7 +1,7 @@
 """SOC2 compliance control mappings and validation."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -81,7 +81,7 @@ class ControlEvidence:
     control_id: str = ""
     evidence_type: str = ""
     description: str = ""
-    collected_at: datetime = field(default_factory=datetime.utcnow)
+    collected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     collected_by: str = ""
     file_path: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -491,7 +491,7 @@ class SOC2Controls:
                 )
 
         return {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_controls": total_controls,
             "compliance_percentage": round(compliance_percentage, 2),
             "status_breakdown": {
