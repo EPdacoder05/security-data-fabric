@@ -390,7 +390,7 @@ async def status_endpoint() -> Dict[str, Any]:
         for sample in metric.samples:
             active_sessions_value = sample.value
             break
-    
+
     return {
         "status": "running",
         "environment": settings.environment,

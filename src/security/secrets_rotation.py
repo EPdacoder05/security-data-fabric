@@ -4,11 +4,9 @@ This module handles automatic 90-day rotation of secrets including database pass
 API tokens, and encryption keys.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
-
-from src.config.settings import settings
 
 
 class SecretType(str, Enum):

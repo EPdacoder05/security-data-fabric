@@ -1,9 +1,7 @@
 """Compliance reporting for SOC2, ISO27001, GDPR, HIPAA, PCI-DSS, and NIST."""
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 from enum import Enum
-
-from src.config.settings import settings
+from typing import Any, Dict, List, Optional
 
 
 class ComplianceFramework(str, Enum):
@@ -26,32 +24,32 @@ class ComplianceStatus(str, Enum):
 
 class ComplianceReporter:
     """Compliance reporting and gap analysis for multiple frameworks.
-    
+
     Supports SOC2, ISO27001, GDPR, HIPAA, PCI-DSS, and NIST frameworks.
     Provides compliance status tracking, gap analysis, and report generation.
-    
+
     Attributes:
         framework: Active compliance framework
         controls: Dictionary of control requirements
         audit_data: Historical audit data
     """
-    
+
     def __init__(self, framework: ComplianceFramework) -> None:
         """Initialize the compliance reporter.
-        
+
         Args:
             framework: Compliance framework to use for reporting
         """
         self.framework = framework
         self.controls = self._load_controls(framework)
         self.audit_data: List[Dict] = []
-        
+
     def _load_controls(self, framework: ComplianceFramework) -> Dict[str, Dict]:
         """Load control requirements for specified framework.
-        
+
         Args:
             framework: Compliance framework
-            
+
         Returns:
             Dictionary of control ID to control details
         """
@@ -64,7 +62,7 @@ class ComplianceReporter:
             ComplianceFramework.NIST: self._get_nist_controls()
         }
         return controls.get(framework, {})
-        
+
     def _get_soc2_controls(self) -> Dict[str, Dict]:
         """Get SOC2 Trust Service Criteria controls."""
         return {
@@ -99,7 +97,7 @@ class ComplianceReporter:
                 'required': True
             }
         }
-        
+
     def _get_iso27001_controls(self) -> Dict[str, Dict]:
         """Get ISO27001 controls."""
         return {
@@ -134,7 +132,7 @@ class ComplianceReporter:
                 'required': True
             }
         }
-        
+
     def _get_gdpr_controls(self) -> Dict[str, Dict]:
         """Get GDPR requirements."""
         return {
@@ -169,7 +167,7 @@ class ComplianceReporter:
                 'required': True
             }
         }
-        
+
     def _get_hipaa_controls(self) -> Dict[str, Dict]:
         """Get HIPAA Security Rule requirements."""
         return {
@@ -204,7 +202,7 @@ class ComplianceReporter:
                 'required': True
             }
         }
-        
+
     def _get_pci_dss_controls(self) -> Dict[str, Dict]:
         """Get PCI-DSS requirements."""
         return {
@@ -239,7 +237,7 @@ class ComplianceReporter:
                 'required': True
             }
         }
-        
+
     def _get_nist_controls(self) -> Dict[str, Dict]:
         """Get NIST 800-53 controls."""
         return {
@@ -274,18 +272,18 @@ class ComplianceReporter:
                 'required': True
             }
         }
-        
+
     async def check_compliance(
         self,
         control_id: str,
         evidence: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """Check compliance status for a specific control.
-        
+
         Args:
             control_id: Control identifier
             evidence: Optional evidence data for compliance verification
-            
+
         Returns:
             Dictionary with compliance check results
         """
@@ -295,11 +293,11 @@ class ComplianceReporter:
                 'status': ComplianceStatus.NOT_APPLICABLE,
                 'message': f'Control {control_id} not found in {self.framework.value}'
             }
-            
+
         control = self.controls[control_id]
-        
+
         status = ComplianceStatus.COMPLIANT if evidence else ComplianceStatus.NON_COMPLIANT
-        
+
         return {
             'control_id': control_id,
             'control_name': control['name'],
@@ -308,16 +306,16 @@ class ComplianceReporter:
             'evidence_provided': evidence is not None,
             'checked_at': datetime.now(timezone.utc).isoformat()
         }
-        
+
     async def generate_compliance_report(
         self,
         control_statuses: Dict[str, ComplianceStatus]
     ) -> Dict[str, Any]:
         """Generate comprehensive compliance report.
-        
+
         Args:
             control_statuses: Dictionary mapping control IDs to their compliance status
-            
+
         Returns:
             Comprehensive compliance report
         """
@@ -334,9 +332,9 @@ class ComplianceReporter:
             1 for status in control_statuses.values()
             if status == ComplianceStatus.PARTIAL
         )
-        
+
         compliance_percentage = (compliant_count / total_controls * 100) if total_controls > 0 else 0
-        
+
         return {
             'framework': self.framework.value,
             'generated_at': datetime.now(timezone.utc).isoformat(),
@@ -358,27 +356,27 @@ class ComplianceReporter:
                 for control_id, control in self.controls.items()
             ]
         }
-        
+
     async def perform_gap_analysis(
         self,
         control_statuses: Dict[str, ComplianceStatus]
     ) -> Dict[str, Any]:
         """Perform gap analysis to identify non-compliant controls.
-        
+
         Args:
             control_statuses: Dictionary mapping control IDs to their compliance status
-            
+
         Returns:
             Gap analysis report with remediation priorities
         """
         gaps = []
-        
+
         for control_id, control in self.controls.items():
             status = control_statuses.get(control_id, ComplianceStatus.NON_COMPLIANT)
-            
+
             if status in [ComplianceStatus.NON_COMPLIANT, ComplianceStatus.PARTIAL]:
                 priority = 'HIGH' if control['required'] else 'MEDIUM'
-                
+
                 gaps.append({
                     'control_id': control_id,
                     'name': control['name'],
@@ -387,9 +385,9 @@ class ComplianceReporter:
                     'priority': priority,
                     'description': control['description']
                 })
-                
+
         gaps.sort(key=lambda x: (x['priority'] == 'HIGH', x['control_id']), reverse=True)
-        
+
         return {
             'framework': self.framework.value,
             'analysis_date': datetime.now(timezone.utc).isoformat(),
@@ -398,14 +396,14 @@ class ComplianceReporter:
             'medium_priority': sum(1 for g in gaps if g['priority'] == 'MEDIUM'),
             'gaps': gaps
         }
-        
+
     async def track_compliance_over_time(
         self,
         control_id: str,
         status: ComplianceStatus
     ) -> None:
         """Track compliance status changes over time.
-        
+
         Args:
             control_id: Control identifier
             status: Current compliance status
@@ -415,27 +413,27 @@ class ComplianceReporter:
             'status': status.value,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
-        
+
     async def get_compliance_history(
         self,
         control_id: str,
         days: int = 30
     ) -> List[Dict]:
         """Get compliance status history for a control.
-        
+
         Args:
             control_id: Control identifier
             days: Number of days of history to retrieve
-            
+
         Returns:
             List of historical compliance status records
         """
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
-        
+
         history = [
             record for record in self.audit_data
             if record['control_id'] == control_id
             and datetime.fromisoformat(record['timestamp']) >= cutoff_date
         ]
-        
+
         return sorted(history, key=lambda x: x['timestamp'], reverse=True)
