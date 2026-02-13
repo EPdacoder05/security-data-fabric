@@ -384,11 +384,18 @@ async def status_endpoint() -> Dict[str, Any]:
     Returns:
         Application status information
     """
+    # Get active_sessions value properly
+    active_sessions_value = 0
+    for metric in metrics.active_sessions.collect():
+        for sample in metric.samples:
+            active_sessions_value = sample.value
+            break
+    
     return {
         "status": "running",
         "environment": settings.environment,
         "version": "1.0.0",
         "metrics": {
-            "active_sessions": metrics.active_sessions._value.get(),
+            "active_sessions": active_sessions_value,
         },
     }

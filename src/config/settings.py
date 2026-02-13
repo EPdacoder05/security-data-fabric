@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     )
     
     # Application
-    environment: Literal["development", "staging", "production"] = "development"
+    environment: Literal["development", "staging", "production", "test"] = "development"
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
     cors_origins: str = "*"
@@ -56,6 +56,21 @@ class Settings(BaseSettings):
     okta_domain: str = ""
     okta_client_id: str = ""
     okta_client_secret: str = ""  # Loaded from Key Vault
+    
+    @property
+    def OKTA_DOMAIN(self) -> str:
+        """Uppercase alias for okta_domain."""
+        return self.okta_domain
+    
+    @property
+    def OKTA_API_TOKEN(self) -> str:
+        """Uppercase alias for okta_client_secret."""
+        return self.okta_client_secret
+    
+    @property
+    def AZURE_KEY_VAULT_URL(self) -> str:
+        """Uppercase alias for azure_keyvault_url."""
+        return self.azure_keyvault_url
     
     # OpenAI / Embeddings
     openai_api_key: str = ""  # Loaded from Key Vault

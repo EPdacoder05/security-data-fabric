@@ -9,7 +9,7 @@ import redis.asyncio as redis
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from redis.asyncio.connection import ConnectionPool
 
 from src.config.settings import settings
@@ -39,7 +39,7 @@ class RedisCache:
         key_bytes = base64.b64decode(key) if len(key) > 32 else key.encode()
 
         if len(key_bytes) != 32:
-            kdf = PBKDF2(
+            kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=b"security-data-fabric",
