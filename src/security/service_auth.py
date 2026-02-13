@@ -1,6 +1,6 @@
 """JWT-based service-to-service authentication."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from jose import JWTError, jwt
@@ -53,7 +53,7 @@ class ServiceAuthManager:
         Returns:
             Encoded JWT token
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expiration = now + timedelta(minutes=self._expiration_minutes)
 
         claims = {
@@ -114,8 +114,8 @@ class ServiceAuthManager:
             if not exp:
                 return True
 
-            expiration_time = datetime.fromtimestamp(exp)
-            return datetime.utcnow() >= expiration_time
+            expiration_time = datetime.fromtimestamp(exp, tz=timezone.utc)
+            return datetime.now(timezone.utc) >= expiration_time
         except JWTError:
             return True
 

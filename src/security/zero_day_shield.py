@@ -1,7 +1,7 @@
 """Zero-day protection utilities with circuit breaker and rate limiting."""
 
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
@@ -64,7 +64,7 @@ class CircuitBreaker:
         if not self._last_failure_time:
             return False
 
-        elapsed = (datetime.utcnow() - self._last_failure_time).total_seconds()
+        elapsed = (datetime.now(timezone.utc) - self._last_failure_time).total_seconds()
         return elapsed >= self._recovery_timeout
 
     def record_success(self) -> None:
@@ -79,7 +79,7 @@ class CircuitBreaker:
     def record_failure(self) -> None:
         """Record failed operation."""
         self._failure_count += 1
-        self._last_failure_time = datetime.utcnow()
+        self._last_failure_time = datetime.now(timezone.utc)
         self._success_count = 0
 
         if self._failure_count >= self._failure_threshold:
@@ -126,7 +126,7 @@ class RateLimiter:
         Returns:
             True if request is allowed, False otherwise
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         bucket = self._buckets[key]
 
         cutoff_time = now - timedelta(minutes=1)
@@ -148,7 +148,7 @@ class RateLimiter:
         Returns:
             Number of remaining requests
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         bucket = self._buckets[key]
 
         cutoff_time = now - timedelta(minutes=1)

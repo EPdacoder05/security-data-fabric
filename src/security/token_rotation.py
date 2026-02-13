@@ -2,7 +2,7 @@
 
 import hashlib
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from src.security.redis_cache import RedisCache
@@ -63,7 +63,7 @@ class TokenRotationManager:
         token_data = {
             "service_id": service_id,
             "service_name": service_name,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "metadata": metadata or {},
         }
 

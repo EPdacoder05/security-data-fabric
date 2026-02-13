@@ -85,7 +85,7 @@ class InputValidator:
 
     COMMAND_INJECTION_PATTERNS = [
         r"\|",
-        r"&(?!amp;|lt;|gt;|quot;|#)",
+        r"&(?!amp;|lt;|gt;|quot;)",
         r";",
         r"\$\(",
         r"`",
