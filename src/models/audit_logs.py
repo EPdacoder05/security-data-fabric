@@ -148,11 +148,11 @@ class AuditLogManager:
         db_session = session or self._session
         if db_session:
             result = await db_session.execute(select(AuditLog).where(AuditLog.id == log_id))
-            return result.scalar_one_or_none()
+            return result.scalar_one_or_none()  # type: ignore[return-value]
         else:
             async with get_db_context() as db_session:
                 result = await db_session.execute(select(AuditLog).where(AuditLog.id == log_id))
-                return result.scalar_one_or_none()
+                return result.scalar_one_or_none()  # type: ignore[return-value]
 
     async def get_logs_by_user(
         self,
@@ -435,8 +435,10 @@ class AuditLogManager:
         ip_addresses = set()
 
         for log in logs:
-            action_counts[log.action] = action_counts.get(log.action, 0) + 1
-            resource_counts[log.resource_type] = resource_counts.get(log.resource_type, 0) + 1
+            action_counts[str(log.action)] = action_counts.get(str(log.action), 0) + 1
+            resource_counts[str(log.resource_type)] = (
+                resource_counts.get(str(log.resource_type), 0) + 1
+            )
             if log.ip_address:
                 ip_addresses.add(log.ip_address)
 

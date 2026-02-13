@@ -454,13 +454,13 @@ class SOC2Controls:
             Dictionary containing compliance report data
         """
         total_controls = len(self.controls)
-        status_counts = {status: 0 for status in ControlStatus}
+        status_counts = dict.fromkeys(ControlStatus, 0)
 
         for control in self.controls.values():
             status_counts[control.status] += 1
 
         # Count controls by criteria
-        criteria_counts = {criteria: 0 for criteria in TrustServiceCriteria}
+        criteria_counts = dict.fromkeys(TrustServiceCriteria, 0)
         for control in self.controls.values():
             criteria_counts[control.criteria] += 1
 

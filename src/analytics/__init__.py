@@ -1,4 +1,5 @@
 """Analytics module for security data fabric."""
+
 from src.analytics.anomaly_detector import AnomalyDetector
 from src.analytics.compliance_reporter import (
     ComplianceFramework,

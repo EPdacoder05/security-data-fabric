@@ -1,14 +1,11 @@
 """Comprehensive tests for API endpoints."""
 
 import time
-from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 from fastapi import status
 from httpx import AsyncClient
-
-from src.api.main import app
 
 
 class TestHealthEndpoints:
@@ -18,7 +15,7 @@ class TestHealthEndpoints:
     async def test_health_check(self, async_http_client: AsyncClient) -> None:
         """Test basic health check endpoint."""
         response = await async_http_client.get("/health")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "healthy"
@@ -29,7 +26,7 @@ class TestHealthEndpoints:
     async def test_readiness_check(self, async_http_client: AsyncClient) -> None:
         """Test readiness check endpoint."""
         response = await async_http_client.get("/health/ready")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "ready"
@@ -41,7 +38,7 @@ class TestHealthEndpoints:
     async def test_liveness_check(self, async_http_client: AsyncClient) -> None:
         """Test liveness check endpoint."""
         response = await async_http_client.get("/health/live")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "alive"
@@ -54,10 +51,10 @@ class TestMetricsEndpoints:
     async def test_metrics_endpoint(self, async_http_client: AsyncClient) -> None:
         """Test Prometheus metrics endpoint."""
         response = await async_http_client.get("/metrics")
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert "text/plain" in response.headers["content-type"]
-        
+
         # Check for Prometheus format
         content = response.text
         assert len(content) > 0
@@ -66,7 +63,7 @@ class TestMetricsEndpoints:
     async def test_metrics_summary(self, async_http_client: AsyncClient) -> None:
         """Test metrics summary JSON endpoint."""
         response = await async_http_client.get("/metrics/summary")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "metrics" in data
@@ -80,7 +77,7 @@ class TestStatusEndpoint:
     async def test_status_endpoint(self, async_http_client: AsyncClient) -> None:
         """Test application status endpoint."""
         response = await async_http_client.get("/status")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["status"] == "running"
@@ -96,7 +93,7 @@ class TestAPIRoot:
     async def test_api_root(self, async_http_client: AsyncClient) -> None:
         """Test API root endpoint."""
         response = await async_http_client.get("/api/v1/")
-        
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "message" in data
@@ -111,7 +108,7 @@ class TestErrorHandling:
     async def test_404_not_found(self, async_http_client: AsyncClient) -> None:
         """Test 404 error handling."""
         response = await async_http_client.get("/nonexistent-endpoint")
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
         data = response.json()
         assert "detail" in data
@@ -127,7 +124,7 @@ class TestErrorHandling:
     async def test_request_id_header(self, async_http_client: AsyncClient) -> None:
         """Test that X-Request-ID header is added to responses."""
         response = await async_http_client.get("/health")
-        
+
         assert "X-Request-ID" in response.headers
         request_id = response.headers["X-Request-ID"]
         assert len(request_id) > 0
@@ -140,7 +137,7 @@ class TestRateLimiting:
     async def test_rate_limit_not_exceeded(self, async_http_client: AsyncClient) -> None:
         """Test normal request within rate limit."""
         response = await async_http_client.get("/health")
-        
+
         assert response.status_code == status.HTTP_200_OK
 
     @pytest.mark.asyncio
@@ -153,7 +150,7 @@ class TestRateLimiting:
         for _ in range(5):
             response = await async_http_client.get("/health")
             responses.append(response)
-        
+
         # All should succeed in test environment
         for response in responses:
             assert response.status_code in [
@@ -175,7 +172,7 @@ class TestCORSMiddleware:
                 "Access-Control-Request-Method": "GET",
             },
         )
-        
+
         # CORS headers should be present
         assert response.status_code in [status.HTTP_200_OK, status.HTTP_405_METHOD_NOT_ALLOWED]
 
@@ -192,7 +189,7 @@ class TestAuthenticationMiddleware:
             "/health/live",
             "/metrics",
         ]
-        
+
         for endpoint in public_endpoints:
             response = await async_http_client.get(endpoint)
             assert response.status_code == status.HTTP_200_OK
@@ -237,11 +234,11 @@ class TestMetricsTracking:
         # Make a request
         response = await async_http_client.get("/health")
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Check metrics endpoint
         metrics_response = await async_http_client.get("/metrics")
         metrics_text = metrics_response.text
-        
+
         # Verify metrics are being tracked
         assert "api_request_count" in metrics_text or len(metrics_text) > 0
 
@@ -250,7 +247,7 @@ class TestMetricsTracking:
         """Test that response time is tracked."""
         response = await async_http_client.get("/health")
         assert response.status_code == status.HTTP_200_OK
-        
+
         # Response time should be tracked in metrics
         metrics_response = await async_http_client.get("/metrics")
         assert metrics_response.status_code == status.HTTP_200_OK
@@ -263,7 +260,7 @@ class TestInputValidation:
     async def test_sql_injection_protection(self, async_http_client: AsyncClient) -> None:
         """Test SQL injection attempts are blocked."""
         from src.security.input_validator import InputValidator
-        
+
         validator = InputValidator()
         # Test with a pattern that will definitely match
         assert validator.is_sql_injection("1 UNION SELECT * FROM users")
@@ -272,7 +269,7 @@ class TestInputValidation:
     async def test_xss_protection(self, async_http_client: AsyncClient) -> None:
         """Test XSS attempts are blocked."""
         from src.security.input_validator import InputValidator
-        
+
         validator = InputValidator()
         assert validator.is_xss("<script>alert('xss')</script>")
 
@@ -280,7 +277,7 @@ class TestInputValidation:
     async def test_path_traversal_protection(self, async_http_client: AsyncClient) -> None:
         """Test path traversal attempts are blocked."""
         from src.security.input_validator import InputValidator
-        
+
         validator = InputValidator()
         assert validator.is_path_traversal("../../../etc/passwd")
 
@@ -292,7 +289,7 @@ class TestSecurityHeaders:
     async def test_request_id_in_response(self, async_http_client: AsyncClient) -> None:
         """Test that X-Request-ID is in response headers."""
         response = await async_http_client.get("/health")
-        
+
         assert "X-Request-ID" in response.headers
 
     @pytest.mark.asyncio
@@ -303,7 +300,7 @@ class TestSecurityHeaders:
             "/health",
             headers={"X-Request-ID": custom_id},
         )
-        
+
         assert response.headers["X-Request-ID"] == custom_id
 
 
@@ -314,7 +311,7 @@ class TestErrorResponses:
     async def test_error_includes_request_id(self, async_http_client: AsyncClient) -> None:
         """Test that error responses include request ID."""
         response = await async_http_client.get("/nonexistent")
-        
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
         data = response.json()
         assert "request_id" in data
@@ -334,11 +331,11 @@ class TestConcurrency:
     async def test_concurrent_requests(self, async_http_client: AsyncClient) -> None:
         """Test handling of concurrent requests."""
         import asyncio
-        
+
         # Make 10 concurrent requests
         tasks = [async_http_client.get("/health") for _ in range(10)]
         responses = await asyncio.gather(*tasks)
-        
+
         # All should succeed
         for response in responses:
             assert response.status_code == status.HTTP_200_OK
@@ -347,7 +344,7 @@ class TestConcurrency:
     async def test_request_isolation(self, async_http_client: AsyncClient) -> None:
         """Test that concurrent requests are isolated."""
         import asyncio
-        
+
         # Make concurrent requests with different custom request IDs
         custom_ids = [f"req-{i}" for i in range(5)]
         tasks = [
@@ -355,7 +352,7 @@ class TestConcurrency:
             for req_id in custom_ids
         ]
         responses = await asyncio.gather(*tasks)
-        
+
         # Each should have its own request ID
         response_ids = [r.headers["X-Request-ID"] for r in responses]
         assert response_ids == custom_ids
@@ -370,7 +367,7 @@ class TestPerformance:
         start = time.time()
         response = await async_http_client.get("/health")
         duration = time.time() - start
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert duration < 1.0  # Should respond in less than 1 second
 
@@ -380,7 +377,7 @@ class TestPerformance:
         start = time.time()
         response = await async_http_client.get("/metrics")
         duration = time.time() - start
-        
+
         assert response.status_code == status.HTTP_200_OK
         assert duration < 1.0  # Should respond in less than 1 second
 
@@ -394,7 +391,7 @@ class TestDocumentation:
         # In test environment, docs might not be available
         # This is environment-dependent
         response = await async_http_client.get("/docs")
-        
+
         # Accept either 200 OK or 404 Not Found (if disabled in test)
         assert response.status_code in [
             status.HTTP_200_OK,
@@ -405,7 +402,7 @@ class TestDocumentation:
     async def test_openapi_schema(self, async_http_client: AsyncClient) -> None:
         """Test that OpenAPI schema is available."""
         response = await async_http_client.get("/openapi.json")
-        
+
         if response.status_code == status.HTTP_200_OK:
             data = response.json()
             assert "openapi" in data

@@ -104,7 +104,7 @@ class InputValidator:
         r"..;",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize input validator with compiled patterns."""
         self._sql_patterns = [re.compile(p) for p in self.SQL_INJECTION_PATTERNS]
         self._xss_patterns = [re.compile(p) for p in self.XSS_PATTERNS]

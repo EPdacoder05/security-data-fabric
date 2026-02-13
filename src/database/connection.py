@@ -1,7 +1,8 @@
 """Database connection and session management."""
+
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING, AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -9,15 +10,23 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool, QueuePool
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import DeclarativeBase
+    from sqlalchemy.orm import declarative_base as declarative_base_type
+else:
+    from sqlalchemy.orm import declarative_base
 
 from src.config import settings
 
 logger = logging.getLogger(__name__)
 
 # Base class for SQLAlchemy models
-Base = declarative_base()
+if TYPE_CHECKING:
+    Base: type[DeclarativeBase]
+else:
+    Base = declarative_base()
 
 # Global engine and session factory
 _engine: AsyncEngine | None = None
@@ -98,9 +107,10 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         # Import all models to ensure they're registered
         from src.database import models  # noqa: F401
+        from sqlalchemy import text
 
         # Enable pgvector extension
-        await conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)

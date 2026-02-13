@@ -3,16 +3,13 @@
 import base64
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from src.security.input_validator import (
     InputValidator,
     ThreatType,
-    ValidationResult,
 )
 from src.security.mfa_service import MFAService
 from src.security.redis_cache import RedisCache
@@ -43,7 +40,7 @@ class TestInputValidator:
         for injection in sql_injections:
             if self.validator.is_sql_injection(injection):
                 detected_count += 1
-        
+
         # Should detect at least some of the SQL injections
         assert detected_count > 0, "Failed to detect any SQL injection patterns"
 
@@ -171,47 +168,51 @@ class TestRedisCache:
     async def test_encrypt_decrypt(self, mock_redis_client: AsyncMock) -> None:
         """Test encryption and decryption of data."""
         cache = RedisCache(encryption_key=self.encryption_key)
-        
+
         test_data = "sensitive data"
         encrypted = cache._encrypt(test_data)
-        
+
         assert isinstance(encrypted, bytes)
         assert len(encrypted) > len(test_data)
-        
+
         decrypted = cache._decrypt(encrypted)
         assert decrypted == test_data
 
     @pytest.mark.asyncio
-    async def test_set_and_get(self, mock_redis_client: AsyncMock, mock_redis_pool: AsyncMock) -> None:
+    async def test_set_and_get(
+        self, mock_redis_client: AsyncMock, mock_redis_pool: AsyncMock
+    ) -> None:
         """Test setting and getting cached values."""
         cache = RedisCache(encryption_key=self.encryption_key)
         cache._client = mock_redis_client
         cache._pool = mock_redis_pool
-        
+
         test_value = {"key": "value", "number": 42}
-        
+
         # Mock the get to return encrypted data
         encrypted_data = cache._encrypt(json.dumps(test_value))
         mock_redis_client.get.return_value = encrypted_data
-        
+
         await cache.set("test_key", test_value)
         result = await cache.get("test_key")
-        
+
         assert result == test_value
         mock_redis_client.set.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_set_with_ttl(self, mock_redis_client: AsyncMock, mock_redis_pool: AsyncMock) -> None:
+    async def test_set_with_ttl(
+        self, mock_redis_client: AsyncMock, mock_redis_pool: AsyncMock
+    ) -> None:
         """Test setting cached value with TTL."""
         cache = RedisCache(encryption_key=self.encryption_key)
         cache._client = mock_redis_client
         cache._pool = mock_redis_pool
-        
+
         test_value = {"data": "test"}
         ttl = 3600
-        
+
         await cache.set("test_key", test_value, ttl=ttl)
-        
+
         mock_redis_client.setex.assert_called_once()
         call_args = mock_redis_client.setex.call_args
         assert call_args[0][0] == "test_key"
@@ -223,9 +224,9 @@ class TestRedisCache:
         cache = RedisCache(encryption_key=self.encryption_key)
         cache._client = mock_redis_client
         cache._pool = mock_redis_pool
-        
+
         result = await cache.delete("test_key")
-        
+
         assert result is True
         mock_redis_client.delete.assert_called_once_with("test_key")
 
@@ -235,9 +236,9 @@ class TestRedisCache:
         cache = RedisCache(encryption_key=self.encryption_key)
         cache._client = mock_redis_client
         cache._pool = mock_redis_pool
-        
+
         result = await cache.exists("test_key")
-        
+
         assert result is True
         mock_redis_client.exists.assert_called_once_with("test_key")
 
@@ -247,10 +248,10 @@ class TestRedisCache:
         cache = RedisCache(encryption_key=self.encryption_key)
         cache._client = mock_redis_client
         cache._pool = mock_redis_pool
-        
+
         ttl = 3600
         result = await cache.expire("test_key", ttl)
-        
+
         assert result is True
         mock_redis_client.expire.assert_called_once_with("test_key", ttl)
 
@@ -259,13 +260,13 @@ class TestRedisCache:
         """Test Redis connection and disconnection."""
         with patch("src.security.redis_cache.ConnectionPool") as mock_pool_class:
             mock_pool_class.from_url.return_value = mock_redis_pool
-            
+
             cache = RedisCache(encryption_key=self.encryption_key)
-            
+
             await cache.connect()
             assert cache._pool is not None
             assert cache._client is not None
-            
+
             await cache.disconnect()
             mock_redis_pool.disconnect.assert_called_once()
 
@@ -283,7 +284,7 @@ class TestMFAService:
         with patch.object(self.mfa_service, "_send_sms_via_okta", new_callable=AsyncMock):
             with patch.object(self.mfa_service, "_store_code", new_callable=AsyncMock):
                 result = await self.mfa_service.send_sms_code("user123", "+1234567890")
-                
+
                 assert result is True
 
     @pytest.mark.asyncio
@@ -292,7 +293,7 @@ class TestMFAService:
         with patch.object(self.mfa_service, "_send_email_via_okta", new_callable=AsyncMock):
             with patch.object(self.mfa_service, "_store_code", new_callable=AsyncMock):
                 result = await self.mfa_service.send_email_code("user123", "user@example.com")
-                
+
                 assert result is True
 
     @pytest.mark.asyncio
@@ -303,13 +304,13 @@ class TestMFAService:
             "code": code,
             "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
         }
-        
+
         with patch.object(
             self.mfa_service, "_get_stored_code", new_callable=AsyncMock, return_value=stored_code
         ):
             with patch.object(self.mfa_service, "_delete_stored_code", new_callable=AsyncMock):
                 result = await self.mfa_service.verify_code("user123", code)
-                
+
                 assert result is True
 
     @pytest.mark.asyncio
@@ -319,12 +320,12 @@ class TestMFAService:
             "code": "123456",
             "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
         }
-        
+
         with patch.object(
             self.mfa_service, "_get_stored_code", new_callable=AsyncMock, return_value=stored_code
         ):
             result = await self.mfa_service.verify_code("user123", "999999")
-            
+
             assert result is False
 
     @pytest.mark.asyncio
@@ -334,13 +335,13 @@ class TestMFAService:
             "code": "123456",
             "expires_at": datetime.now(timezone.utc) - timedelta(minutes=5),
         }
-        
+
         with patch.object(
             self.mfa_service, "_get_stored_code", new_callable=AsyncMock, return_value=stored_code
         ):
             with patch.object(self.mfa_service, "_delete_stored_code", new_callable=AsyncMock):
                 result = await self.mfa_service.verify_code("user123", "123456")
-                
+
                 assert result is False
 
     @pytest.mark.asyncio
@@ -350,7 +351,7 @@ class TestMFAService:
             self.mfa_service, "_get_stored_code", new_callable=AsyncMock, return_value=None
         ):
             result = await self.mfa_service.verify_code("user123", "123456")
-            
+
             assert result is False
 
     @pytest.mark.asyncio
@@ -358,7 +359,7 @@ class TestMFAService:
         """Test TOTP setup."""
         with patch.object(self.mfa_service, "_store_totp_secret", new_callable=AsyncMock):
             result = await self.mfa_service.setup_totp("user123")
-            
+
             assert "secret" in result
             assert "qr_code_url" in result
             assert len(result["secret"]) == 32
@@ -367,34 +368,34 @@ class TestMFAService:
     async def test_verify_totp_success(self) -> None:
         """Test successful TOTP verification."""
         import pyotp
-        
+
         secret = pyotp.random_base32()
         totp = pyotp.TOTP(secret)
         code = totp.now()
-        
+
         with patch.object(
             self.mfa_service, "_get_totp_secret", new_callable=AsyncMock, return_value=secret
         ):
             result = await self.mfa_service.verify_totp("user123", code)
-            
+
             assert result is True
 
     @pytest.mark.asyncio
     async def test_verify_totp_invalid(self) -> None:
         """Test TOTP verification with invalid code."""
         secret = "JBSWY3DPEHPK3PXP"
-        
+
         with patch.object(
             self.mfa_service, "_get_totp_secret", new_callable=AsyncMock, return_value=secret
         ):
             result = await self.mfa_service.verify_totp("user123", "000000")
-            
+
             assert result is False
 
     def test_generate_verification_code(self) -> None:
         """Test verification code generation."""
         code = self.mfa_service._generate_verification_code()
-        
+
         assert len(code) == 6
         assert code.isdigit()
 
@@ -417,7 +418,7 @@ class TestServiceAuth:
             service_name="test-service",
             scopes=["read", "write"],
         )
-        
+
         assert isinstance(token, str)
         assert len(token) > 0
 
@@ -428,9 +429,9 @@ class TestServiceAuth:
             service_name="test-service",
             scopes=["read", "write"],
         )
-        
+
         claims = self.auth_manager.validate_token(token)
-        
+
         assert claims is not None
         assert claims["sub"] == "service-123"
         assert claims["service_name"] == "test-service"
@@ -440,9 +441,9 @@ class TestServiceAuth:
     def test_validate_token_invalid(self) -> None:
         """Test validation of invalid token."""
         invalid_token = "invalid.token.here"
-        
+
         claims = self.auth_manager.validate_token(invalid_token)
-        
+
         assert claims is None
 
     def test_is_token_expired(self) -> None:
@@ -451,9 +452,9 @@ class TestServiceAuth:
             service_id="service-123",
             service_name="test-service",
         )
-        
+
         is_expired = self.auth_manager.is_token_expired(token)
-        
+
         assert is_expired is False
 
     def test_get_service_id(self) -> None:
@@ -462,9 +463,9 @@ class TestServiceAuth:
             service_id="service-123",
             service_name="test-service",
         )
-        
+
         service_id = self.auth_manager.get_service_id(token)
-        
+
         assert service_id == "service-123"
 
     def test_get_scopes(self) -> None:
@@ -475,9 +476,9 @@ class TestServiceAuth:
             service_name="test-service",
             scopes=scopes,
         )
-        
+
         extracted_scopes = self.auth_manager.get_scopes(token)
-        
+
         assert extracted_scopes == scopes
 
     def test_has_scope(self) -> None:
@@ -487,25 +488,25 @@ class TestServiceAuth:
             service_name="test-service",
             scopes=["read", "write"],
         )
-        
+
         assert self.auth_manager.has_scope(token, "read") is True
         assert self.auth_manager.has_scope(token, "admin") is False
 
     def test_refresh_token(self) -> None:
         """Test token refresh."""
         import time
-        
+
         old_token = self.auth_manager.generate_token(
             service_id="service-123",
             service_name="test-service",
             scopes=["read"],
         )
-        
+
         # Sleep for 1 second to ensure different timestamp
         time.sleep(1)
-        
+
         new_token = self.auth_manager.refresh_token(old_token)
-        
+
         assert new_token is not None
         # Tokens might be the same if generated within same second, just verify it's valid
         claims = self.auth_manager.validate_token(new_token)
@@ -520,9 +521,9 @@ class TestSecretsManager:
         """Test getting secret from Azure Key Vault."""
         manager = SecretsManager()
         manager.client = mock_azure_keyvault
-        
+
         result = await manager.get_secret("test-secret")
-        
+
         assert result == "test-secret-value"
         mock_azure_keyvault.get_secret.assert_called_once_with("test-secret")
 
@@ -531,11 +532,11 @@ class TestSecretsManager:
         """Test secret fallback to environment variable."""
         manager = SecretsManager()
         manager.client = None
-        
+
         monkeypatch.setenv("TEST_SECRET", "env-secret-value")
-        
+
         result = await manager.get_secret("test-secret", env_name="TEST_SECRET")
-        
+
         assert result == "env-secret-value"
 
     @pytest.mark.asyncio
@@ -543,7 +544,7 @@ class TestSecretsManager:
         """Test getting non-existent secret raises error."""
         manager = SecretsManager()
         manager.client = None
-        
+
         with pytest.raises(ValueError, match="Secret not found"):
             await manager.get_secret("nonexistent-secret")
 
@@ -552,9 +553,9 @@ class TestSecretsManager:
         """Test setting secret in Key Vault."""
         manager = SecretsManager()
         manager.client = mock_azure_keyvault
-        
+
         result = await manager.set_secret("test-secret", "new-value")
-        
+
         assert result is True
         mock_azure_keyvault.set_secret.assert_called_once_with("test-secret", "new-value")
 
@@ -563,9 +564,9 @@ class TestSecretsManager:
         """Test setting secret fails when client not initialized."""
         manager = SecretsManager()
         manager.client = None
-        
+
         result = await manager.set_secret("test-secret", "value")
-        
+
         assert result is False
 
     @pytest.mark.asyncio
@@ -573,9 +574,9 @@ class TestSecretsManager:
         """Test deleting secret from Key Vault."""
         manager = SecretsManager()
         manager.client = mock_azure_keyvault
-        
+
         result = await manager.delete_secret("test-secret")
-        
+
         assert result is True
         mock_azure_keyvault.begin_delete_secret.assert_called_once_with("test-secret")
 
@@ -591,17 +592,20 @@ class TestSecretsRotation:
     async def test_check_rotation_needed_never_rotated(self) -> None:
         """Test rotation check for never-rotated secret."""
         with patch.object(
-            self.rotation_manager, "_get_last_rotation_date", new_callable=AsyncMock, return_value=None
+            self.rotation_manager,
+            "_get_last_rotation_date",
+            new_callable=AsyncMock,
+            return_value=None,
         ):
             result = await self.rotation_manager.check_rotation_needed(SecretType.JWT_SIGNING_KEY)
-            
+
             assert result is True
 
     @pytest.mark.asyncio
     async def test_check_rotation_needed_old_secret(self) -> None:
         """Test rotation check for old secret."""
         old_date = datetime.now(timezone.utc) - timedelta(days=100)
-        
+
         with patch.object(
             self.rotation_manager,
             "_get_last_rotation_date",
@@ -609,14 +613,14 @@ class TestSecretsRotation:
             return_value=old_date,
         ):
             result = await self.rotation_manager.check_rotation_needed(SecretType.JWT_SIGNING_KEY)
-            
+
             assert result is True
 
     @pytest.mark.asyncio
     async def test_check_rotation_needed_recent_secret(self) -> None:
         """Test rotation check for recently rotated secret."""
         recent_date = datetime.now(timezone.utc) - timedelta(days=30)
-        
+
         with patch.object(
             self.rotation_manager,
             "_get_last_rotation_date",
@@ -624,31 +628,32 @@ class TestSecretsRotation:
             return_value=recent_date,
         ):
             result = await self.rotation_manager.check_rotation_needed(SecretType.JWT_SIGNING_KEY)
-            
+
             assert result is False
 
     @pytest.mark.asyncio
     async def test_rotate_secret(self) -> None:
         """Test secret rotation."""
-        with patch.object(
-            self.rotation_manager, "_update_secret_in_vault", new_callable=AsyncMock
-        ):
+        with patch.object(self.rotation_manager, "_update_secret_in_vault", new_callable=AsyncMock):
             with patch.object(self.rotation_manager, "_record_rotation", new_callable=AsyncMock):
                 result = await self.rotation_manager.rotate_secret(SecretType.JWT_SIGNING_KEY)
-                
+
                 assert result is True
 
     @pytest.mark.asyncio
     async def test_rotate_all_secrets(self) -> None:
         """Test rotating all secrets (verify SecretType is iterable)."""
         with patch.object(
-            self.rotation_manager, "check_rotation_needed", new_callable=AsyncMock, return_value=True
+            self.rotation_manager,
+            "check_rotation_needed",
+            new_callable=AsyncMock,
+            return_value=True,
         ):
             with patch.object(
                 self.rotation_manager, "rotate_secret", new_callable=AsyncMock, return_value=True
             ):
                 results = await self.rotation_manager.rotate_all_secrets()
-                
+
                 # Verify that SecretType enum is iterable
                 assert len(results) > 0
                 assert SecretType.DATABASE_PASSWORD.value in results
@@ -657,16 +662,14 @@ class TestSecretsRotation:
     def test_generate_new_secret_value(self) -> None:
         """Test secret value generation."""
         # Test database password generation
-        db_password = self.rotation_manager._generate_new_secret_value(
-            SecretType.DATABASE_PASSWORD
-        )
+        db_password = self.rotation_manager._generate_new_secret_value(SecretType.DATABASE_PASSWORD)
         assert len(db_password) > 0
-        
+
         # Test JWT signing key generation
         jwt_key = self.rotation_manager._generate_new_secret_value(SecretType.JWT_SIGNING_KEY)
         assert len(jwt_key) > 0
         assert len(jwt_key) > len(db_password)
-        
+
         # Test encryption key generation
         enc_key = self.rotation_manager._generate_new_secret_value(SecretType.ENCRYPTION_KEY)
         assert len(enc_key) == 64  # 32 bytes as hex = 64 characters
@@ -675,7 +678,7 @@ class TestSecretsRotation:
     async def test_secret_type_enum_iteration(self) -> None:
         """Test that SecretType enum can be iterated."""
         secret_types = list(SecretType)
-        
+
         assert len(secret_types) > 0
         assert SecretType.DATABASE_PASSWORD in secret_types
         assert SecretType.REDIS_PASSWORD in secret_types

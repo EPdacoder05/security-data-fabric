@@ -1,4 +1,5 @@
 """SQLAlchemy models for Security Data Fabric."""
+
 import uuid
 from datetime import datetime
 
@@ -114,7 +115,7 @@ class EventEmbedding(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     event_id = Column(UUID(as_uuid=True), ForeignKey("normalized_events.id"), nullable=False)
-    embedding = Column(Vector(384), nullable=False)  # MiniLM-L6-v2 dimension
+    embedding: Vector = Column(Vector(384), nullable=False)  # type: ignore[assignment]
     model_name = Column(String(100), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -197,7 +198,7 @@ class MFAToken(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    token_type = Column(
+    token_type: SQLEnum = Column(  # type: ignore[assignment]
         SQLEnum("totp", "sms", "email", "push", "webauthn", name="mfa_token_type"),
         nullable=False,
     )

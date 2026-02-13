@@ -170,7 +170,7 @@ class RateLimiter:
 class RequestFilter:
     """Request filtering utilities for anomaly detection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize request filter."""
         self._request_sizes: Dict[str, deque] = defaultdict(deque)
         self._request_counts: Dict[str, int] = defaultdict(int)
@@ -242,7 +242,7 @@ class ZeroDayShield:
     comprehensive protection against unknown threats.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize zero-day shield."""
         self._circuit_breakers: Dict[str, CircuitBreaker] = {}
         self._rate_limiter = RateLimiter()

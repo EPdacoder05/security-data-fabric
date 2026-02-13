@@ -72,7 +72,7 @@ class ServiceAuthManager:
 
         token = jwt.encode(claims, self._signing_key, algorithm=self._algorithm)
 
-        return token
+        return token  # type: ignore[return-value]
 
     def validate_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Validate JWT token and extract claims.
@@ -89,7 +89,7 @@ class ServiceAuthManager:
             if claims.get("type") != "service":
                 return None
 
-            return claims
+            return dict(claims)
         except JWTError:
             return None
 
@@ -144,7 +144,7 @@ class ServiceAuthManager:
         """
         claims = self.validate_token(token)
         if claims:
-            return claims.get("scopes", [])
+            return list(claims.get("scopes", []))
         return []
 
     def has_scope(self, token: str, required_scope: str) -> bool:
@@ -185,8 +185,8 @@ class ServiceAuthManager:
         }
 
         return self.generate_token(
-            service_id=service_id,
-            service_name=service_name,
+            service_id=str(service_id),
+            service_name=str(service_name),
             scopes=scopes,
             additional_claims=additional_claims if additional_claims else None,
         )

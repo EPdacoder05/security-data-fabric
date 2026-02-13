@@ -108,6 +108,9 @@ class RedisCache:
         if not self._client:
             await self.connect()
 
+        if not self._client:
+            return False
+
         try:
             serialized = json.dumps(value)
             encrypted = self._encrypt(serialized)
@@ -133,6 +136,9 @@ class RedisCache:
         if not self._client:
             await self.connect()
 
+        if not self._client:
+            return None
+
         try:
             encrypted = await self._client.get(key)
             if not encrypted:
@@ -155,9 +161,12 @@ class RedisCache:
         if not self._client:
             await self.connect()
 
+        if not self._client:
+            return False
+
         try:
             result = await self._client.delete(key)
-            return result > 0
+            return bool(result > 0)
         except Exception:
             return False
 
@@ -173,9 +182,12 @@ class RedisCache:
         if not self._client:
             await self.connect()
 
+        if not self._client:
+            return False
+
         try:
             result = await self._client.exists(key)
-            return result > 0
+            return bool(result > 0)
         except Exception:
             return False
 
@@ -192,9 +204,12 @@ class RedisCache:
         if not self._client:
             await self.connect()
 
+        if not self._client:
+            return False
+
         try:
             result = await self._client.expire(key, ttl)
-            return result
+            return bool(result)
         except Exception:
             return False
 
@@ -210,7 +225,11 @@ class RedisCache:
         if not self._client:
             await self.connect()
 
+        if not self._client:
+            return -2
+
         try:
-            return await self._client.ttl(key)
+            result = await self._client.ttl(key)
+            return int(result)
         except Exception:
             return -2

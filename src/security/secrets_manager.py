@@ -50,7 +50,7 @@ class SecretsManager:
             try:
                 secret = self.client.get_secret(secret_name)
                 logger.debug("Secret retrieved from Azure Key Vault")
-                return secret.value
+                return str(secret.value)
             except Exception as e:
                 logger.warning("Failed to get secret from Key Vault: %s", str(e))
 
@@ -58,13 +58,13 @@ class SecretsManager:
             value = os.getenv(env_name)
             if value:
                 logger.debug("Secret retrieved from environment variable")
-                return value
+                return str(value)
 
         if hasattr(settings, secret_name.upper()):
             value = getattr(settings, secret_name.upper())
             if value:
                 logger.debug("Secret retrieved from application settings")
-                return value
+                return str(value)
 
         raise ValueError("Secret not found (tried Key Vault and environment)")
 
@@ -132,7 +132,7 @@ class SecretsManager:
 
         try:
             properties = self.client.list_properties_of_secrets()
-            return [prop.name for prop in properties]
+            return [prop.name for prop in properties if prop.name is not None]
         except Exception as e:
             logger.error("Failed to list secrets from Key Vault: %s", str(e))
             return []

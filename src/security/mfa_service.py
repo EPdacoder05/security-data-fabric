@@ -140,7 +140,7 @@ class MFAService:
                 return False
 
             totp = pyotp.TOTP(secret)
-            is_valid = totp.verify(code, valid_window=1)
+            is_valid = bool(totp.verify(code, valid_window=1))
 
             if is_valid:
                 logger.info("TOTP code verified successfully for user_id=%s", user_id)

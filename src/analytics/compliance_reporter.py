@@ -1,4 +1,5 @@
 """Compliance reporting for SOC2, ISO27001, GDPR, HIPAA, PCI-DSS, and NIST."""
+
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional

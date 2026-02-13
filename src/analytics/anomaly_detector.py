@@ -1,4 +1,5 @@
 """Isolation Forest-based anomaly detection for security events."""
+
 from typing import Any, Dict, List, Optional
 
 import numpy as np

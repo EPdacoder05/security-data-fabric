@@ -1,4 +1,5 @@
 """Database package."""
+
 from src.database import models
 from src.database.connection import (
     Base,

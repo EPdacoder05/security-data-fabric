@@ -3,7 +3,7 @@
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import Any, Callable, Dict
+from typing import Any, AsyncGenerator, Callable, Dict
 from uuid import uuid4
 
 from fastapi import FastAPI, Request, Response, status
@@ -157,7 +157,7 @@ async def metrics_middleware(request: Request, call_next: Callable) -> Response:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> None:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager.
 
     Handles startup and shutdown events for database connections
@@ -383,10 +383,10 @@ async def status_endpoint() -> Dict[str, Any]:
         Application status information
     """
     # Get active_sessions value properly
-    active_sessions_value = 0
+    active_sessions_value: float = 0.0
     for metric in metrics.active_sessions.collect():
         for sample in metric.samples:
-            active_sessions_value = sample.value
+            active_sessions_value = float(sample.value)
             break
 
     return {

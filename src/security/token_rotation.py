@@ -148,6 +148,9 @@ class TokenRotationManager:
         count = 0
 
         try:
+            if not self._cache._client:
+                return count
+
             pattern = "refresh_token:*"
             cursor = "0"
 
