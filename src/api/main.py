@@ -82,7 +82,7 @@ def get_rate_limiter() -> Callable:
 
         # Process request
         response = await call_next(request)
-        return response
+        return response  # type: ignore[no-any-return]
 
     return rate_limit_middleware
 
@@ -102,7 +102,7 @@ async def request_id_middleware(request: Request, call_next: Callable) -> Respon
 
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
-    return response
+    return response  # type: ignore[no-any-return]
 
 
 async def metrics_middleware(request: Request, call_next: Callable) -> Response:
@@ -142,7 +142,7 @@ async def metrics_middleware(request: Request, call_next: Callable) -> Response:
                 method=request.method, endpoint=request.url.path
             ).observe(len(response.body))
 
-        return response
+        return response  # type: ignore[no-any-return]
 
     except Exception:
         # Track error

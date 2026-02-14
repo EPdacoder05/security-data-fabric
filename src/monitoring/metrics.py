@@ -334,11 +334,11 @@ class PrometheusMetrics:
         api_metrics = list(self.api_request_count.collect())
         anomaly_metrics = list(self.anomalies_detected.collect())
         sla_metrics = list(self.sla_breaches.collect())
-        
+
         api_samples = list(api_metrics[0].samples) if api_metrics else []
         anomaly_samples = list(anomaly_metrics[0].samples) if anomaly_metrics else []
         sla_samples = list(sla_metrics[0].samples) if sla_metrics else []
-        
+
         return {
             "api_requests_total": float(sum([s.value for s in api_samples])),
             "cache_hit_rate": self.get_cache_hit_rate("redis", "*"),

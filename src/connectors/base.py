@@ -273,7 +273,7 @@ class BaseConnector(ABC):
             Response JSON data
         """
         response = await self._execute_request("GET", endpoint, params=params)
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _post(
         self,
@@ -292,7 +292,7 @@ class BaseConnector(ABC):
             Response JSON data
         """
         response = await self._execute_request("POST", endpoint, params=params, json_data=json_data)
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _put(
         self,
@@ -311,7 +311,7 @@ class BaseConnector(ABC):
             Response JSON data
         """
         response = await self._execute_request("PUT", endpoint, params=params, json_data=json_data)
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _delete(
         self,
@@ -328,7 +328,7 @@ class BaseConnector(ABC):
             Response JSON data
         """
         response = await self._execute_request("DELETE", endpoint, params=params)
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     def is_connected(self) -> bool:
         """Check if connector is connected.

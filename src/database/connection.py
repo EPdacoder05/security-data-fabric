@@ -105,8 +105,9 @@ async def init_db() -> None:
 
     async with engine.begin() as conn:
         # Import all models to ensure they're registered
-        from src.database import models  # noqa: F401
         from sqlalchemy import text
+
+        from src.database import models  # noqa: F401
 
         # Enable pgvector extension
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))

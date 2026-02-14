@@ -10,6 +10,7 @@ from src.analytics.anomaly_detector import AnomalyDetector
 from src.analytics.compliance_reporter import (
     ComplianceFramework,
     ComplianceReporter,
+    ComplianceStatus,
 )
 from src.analytics.forecaster import TimeSeriesForecaster
 from src.analytics.sla_tracker import SLASeverity, SLAStatus, SLATracker
@@ -295,9 +296,9 @@ class TestComplianceReporter:
         """Test tracking compliance over time."""
         control_id = "CC1.1"
         status = ComplianceStatus.COMPLIANT
-        
+
         await self.reporter.track_compliance_over_time(control_id, status)
-        
+
         # Verify tracking was successful (no exception raised)
         assert True
 

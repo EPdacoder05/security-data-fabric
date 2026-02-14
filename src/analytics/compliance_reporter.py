@@ -71,7 +71,9 @@ class ComplianceReporter:
         return {
             "CC1.1": {
                 "name": "Control Environment",
-                "description": "Organization demonstrates commitment to integrity and ethical values",
+                "description": (
+                    "Organization demonstrates commitment to integrity and ethical values"
+                ),
                 "category": "Common Criteria",
                 "required": True,
             },

@@ -116,7 +116,7 @@ class ServiceNowConnector(BaseConnector):
         """
         full_endpoint = f"{self.table_api_path}/{endpoint}"
         response = await self._get(full_endpoint, params=params)
-        return response.get("result", [])
+        return response.get("result", [])  # type: ignore[no-any-return]
 
     async def fetch_incidents(
         self,
@@ -409,4 +409,4 @@ class ServiceNowConnector(BaseConnector):
             f"{self.table_api_path}/incident",
             json_data=incident_data,
         )
-        return response.get("result", {})
+        return response.get("result", {})  # type: ignore[no-any-return]

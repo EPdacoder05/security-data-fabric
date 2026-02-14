@@ -72,7 +72,7 @@ class ServiceAuthManager:
 
         token = jwt.encode(claims, self._signing_key, algorithm=self._algorithm)
 
-        return token  # type: ignore[return-value]
+        return token  # type: ignore[no-any-return]
 
     def validate_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Validate JWT token and extract claims.
