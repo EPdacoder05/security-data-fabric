@@ -235,7 +235,7 @@ class AnomalyDetector:
                 }
             )
 
-        contributions.sort(key=lambda x: x["contribution"], reverse=True)
+        contributions.sort(key=lambda x: float(x["contribution"]), reverse=True)  # type: ignore[arg-type]
         return contributions[:top_n]
 
     async def get_statistics(self) -> Dict[str, Any]:

@@ -1,12 +1,15 @@
 """Refresh token rotation with Redis storage."""
 
 import hashlib
+import logging
 import secrets
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from src.security.redis_cache import RedisCache
 from src.security.service_auth import ServiceAuthManager
+
+logger = logging.getLogger(__name__)
 
 
 class TokenRotationManager:

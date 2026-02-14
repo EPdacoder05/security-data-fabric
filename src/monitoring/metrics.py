@@ -331,9 +331,13 @@ class PrometheusMetrics:
         Returns:
             Dictionary containing current metric values
         """
-        api_samples = list(self.api_request_count.collect()[0].samples)
-        anomaly_samples = list(self.anomalies_detected.collect()[0].samples)
-        sla_samples = list(self.sla_breaches.collect()[0].samples)
+        api_metrics = list(self.api_request_count.collect())
+        anomaly_metrics = list(self.anomalies_detected.collect())
+        sla_metrics = list(self.sla_breaches.collect())
+        
+        api_samples = list(api_metrics[0].samples) if api_metrics else []
+        anomaly_samples = list(anomaly_metrics[0].samples) if anomaly_metrics else []
+        sla_samples = list(sla_metrics[0].samples) if sla_metrics else []
         
         return {
             "api_requests_total": float(sum([s.value for s in api_samples])),
