@@ -407,4 +407,3 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 
 For issues and questions:
 - Create an issue in this repository
-- Contact: security-data-fabric-support@example.com
