@@ -620,7 +620,6 @@ spec:
 ### Getting Help
 - Documentation: `/docs`
 - Issue Tracker: GitHub Issues
-- Security Issues: security@example.com
 - Team Chat: Slack #security-fabric
 
 ---
