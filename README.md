@@ -93,12 +93,20 @@ Enterprise security analytics platform that ingests data from 10+ security/IT so
 - AI agent access control
 
 ### Infrastructure Security
-- Non-root Docker containers
-- Read-only filesystem in containers
-- Dropped Linux capabilities
-- Network segmentation in docker-compose
-- Localhost-only API binding in production
-- Resource limits (CPU/memory)
+- **Non-root Docker containers** (UID 1000 appuser)
+- **Minimal base images** (python:3.11-slim, redis:alpine)
+- **Multi-stage builds** (builder + runtime separation)
+- **Read-only filesystem** in containers with tmpfs for writes
+- **Dropped ALL Linux capabilities** (only NET_BIND_SERVICE added)
+- **NO Docker socket exposure** (critical security requirement)
+- **Network segmentation** in docker-compose (frontend/backend/monitoring)
+- **Localhost-only port binding** (127.0.0.1) in production
+- **Resource limits** (CPU/memory) to prevent DoS
+- **Security options**: no-new-privileges enabled
+- **Health checks** for all services
+- **CIS Docker Benchmark compliant**
+
+See [SECURITY_AUDIT.md](SECURITY_AUDIT.md#docker-container-security) for complete Docker security documentation.
 
 ## AWS IAC Hardening
 
@@ -191,13 +199,36 @@ docker-compose exec postgres psql -U postgres -d security_fabric -c "CREATE EXTE
 
 ### Run Server
 
+**Development Mode:**
 ```bash
-# Development
+# Run locally with hot-reload
 poetry run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
-
-# Production (with Docker)
-docker-compose up -d
 ```
+
+**Production Mode (Docker - Recommended):**
+```bash
+# Build and start all services
+docker-compose up -d
+
+# Check service health
+docker-compose ps
+
+# View logs
+docker-compose logs -f app
+
+# Access API
+curl http://localhost:8000/health
+```
+
+**Docker Security Features:**
+- ✅ Non-root user (UID 1000)
+- ✅ Read-only filesystem
+- ✅ Minimal base images
+- ✅ No Docker socket exposure
+- ✅ Network segmentation
+- ✅ Resource limits enforced
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment guide.
 
 The API will be available at `http://localhost:8000`
 

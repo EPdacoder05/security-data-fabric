@@ -76,8 +76,10 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Drop all capabilities (security hardening)
-# Note: This is handled by docker-compose.yml or runtime configuration
+# Security: Drop all capabilities (configured in docker-compose.yml)
+# --cap-drop=ALL ensures minimal privileges
+# Only NET_BIND_SERVICE is added to allow binding to port 8000
+# This is part of defense-in-depth and follows CIS Docker Benchmark
 
 # Start application with Uvicorn
 CMD ["uvicorn", "src.api.main:app", \

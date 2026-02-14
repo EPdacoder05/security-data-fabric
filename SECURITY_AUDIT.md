@@ -2,18 +2,19 @@
 
 ## Table of Contents
 1. [Security Overview](#security-overview)
-2. [SQL Injection Protection (20 Patterns)](#sql-injection-protection)
-3. [Cross-Site Scripting (XSS) Protection](#cross-site-scripting-xss-protection)
-4. [Server-Side Request Forgery (SSRF) Protection](#server-side-request-forgery-ssrf-protection)
-5. [Command Injection Protection](#command-injection-protection)
-6. [Encryption at Rest](#encryption-at-rest)
-7. [Encryption in Transit](#encryption-in-transit)
-8. [Authentication Mechanisms](#authentication-mechanisms)
-9. [Authorization (RBAC)](#authorization-rbac)
-10. [Audit Logging](#audit-logging)
-11. [Secret Management](#secret-management)
-12. [Compliance Features](#compliance-features)
-13. [Additional Security Patterns](#additional-security-patterns)
+2. [Docker & Container Security](#docker-container-security)
+3. [SQL Injection Protection (20 Patterns)](#sql-injection-protection)
+4. [Cross-Site Scripting (XSS) Protection](#cross-site-scripting-xss-protection)
+5. [Server-Side Request Forgery (SSRF) Protection](#server-side-request-forgery-ssrf-protection)
+6. [Command Injection Protection](#command-injection-protection)
+7. [Encryption at Rest](#encryption-at-rest)
+8. [Encryption in Transit](#encryption-in-transit)
+9. [Authentication Mechanisms](#authentication-mechanisms)
+10. [Authorization (RBAC)](#authorization-rbac)
+11. [Audit Logging](#audit-logging)
+12. [Secret Management](#secret-management)
+13. [Compliance Features](#compliance-features)
+14. [Additional Security Patterns](#additional-security-patterns)
 
 ---
 
@@ -27,6 +28,428 @@ The Security Data Fabric implements **30+ security patterns** to protect against
 3. **Zero Trust**: Verify everything, trust nothing
 4. **Security by Design**: Security integrated from the start
 5. **Continuous Monitoring**: Real-time threat detection
+
+---
+
+## Docker & Container Security
+
+### Overview
+The Security Data Fabric implements **enterprise-grade container security** following industry best practices and security hardening standards.
+
+### 1. Minimal Base Images
+**Pattern**: Use smallest possible base images from trusted sources
+
+**Implementation**:
+```dockerfile
+# Multi-stage build with minimal base
+FROM python:3.11-slim AS builder  # Debian slim variant
+FROM python:3.11-slim             # Final runtime image
+
+# Dependencies use official minimal images
+redis:7.2-alpine                  # Alpine Linux (5MB base)
+prom/prometheus:v2.48.0          # Official Prometheus image
+ankane/pgvector:v0.5.1           # PostgreSQL with pgvector extension
+```
+
+**Benefits**:
+- ✅ Reduced attack surface (fewer packages = fewer vulnerabilities)
+- ✅ Smaller image sizes (faster deployments)
+- ✅ Lower CVE exposure
+- ✅ Better performance
+
+### 2. Non-Root User Execution
+**Pattern**: Never run containers as root
+
+**Implementation**:
+```dockerfile
+# Create non-root user with specific UID/GID
+RUN groupadd -r -g 1000 appuser && \
+    useradd -r -u 1000 -g appuser -m -s /sbin/nologin appuser
+
+# Set ownership of application files
+COPY --chown=appuser:appuser src/ ./src/
+
+# Switch to non-root user BEFORE CMD/ENTRYPOINT
+USER appuser
+
+# Application runs as UID 1000 (not root)
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**docker-compose.yml**:
+```yaml
+prometheus:
+  user: "65534:65534"  # nobody user for Prometheus
+```
+
+**Security Impact**:
+- ✅ Prevents privilege escalation
+- ✅ Limits damage from container breakout
+- ✅ Compliant with CIS Docker Benchmark
+- ✅ Required for SOC2/ISO27001 compliance
+
+### 3. NEVER Expose Docker Daemon Socket
+**Pattern**: CRITICAL - Never mount Docker socket into containers
+
+**Implementation**:
+```yaml
+# ✅ SECURE - No Docker socket mounting
+services:
+  app:
+    volumes:
+      - ./logs:/app/logs              # Only application data
+      - NOT /var/run/docker.sock      # NEVER MOUNT THIS!
+
+# ❌ INSECURE - Would give container full host control
+#   volumes:
+#     - /var/run/docker.sock:/var/run/docker.sock  # DON'T DO THIS!
+```
+
+**Why This Matters**:
+- 🚨 Docker socket = root access to host system
+- 🚨 Container can escape and control entire host
+- 🚨 Can start privileged containers
+- 🚨 Can read/write any file on host
+- 🚨 Complete security bypass
+
+**Verification**:
+```bash
+# Verify no socket mounts
+docker-compose config | grep -i "docker.sock"
+# Should return nothing
+
+# Check running containers
+docker inspect sdf-api | grep -i "docker.sock"
+# Should return nothing
+```
+
+### 4. Capability Dropping
+**Pattern**: Drop all Linux capabilities, add only what's needed
+
+**Implementation**:
+```yaml
+services:
+  app:
+    cap_drop:
+      - ALL                    # Drop all capabilities
+    cap_add:
+      - NET_BIND_SERVICE      # Only add ability to bind to ports < 1024
+```
+
+**Available Capabilities** (all dropped by default):
+- `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `FSETID`
+- `KILL`, `SETGID`, `SETUID`, `SETPCAP`
+- `NET_BIND_SERVICE`, `NET_RAW`, `SYS_CHROOT`
+- `MKNOD`, `AUDIT_WRITE`, `SETFCAP`
+
+**Impact**:
+- ✅ Minimal privilege principle
+- ✅ Reduces attack surface
+- ✅ Prevents privilege escalation
+
+### 5. Read-Only Filesystem
+**Pattern**: Mount container filesystem as read-only with tmpfs for writes
+
+**Implementation**:
+```yaml
+services:
+  app:
+    read_only: true              # Entire filesystem read-only
+    tmpfs:
+      - /tmp:noexec,nosuid,size=200M      # Temporary files
+      - /app/tmp:noexec,nosuid,size=200M  # Application temp
+  
+  redis:
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=50M
+```
+
+**Benefits**:
+- ✅ Prevents malware persistence
+- ✅ Stops unauthorized file modifications
+- ✅ Detects malicious activity attempts
+
+### 6. Security Options
+**Pattern**: Enable additional kernel security features
+
+**Implementation**:
+```yaml
+services:
+  app:
+    security_opt:
+      - no-new-privileges:true   # Prevents setuid privilege escalation
+```
+
+**Explanation**:
+- `no-new-privileges`: Prevents processes from gaining additional privileges
+- Blocks `setuid`/`setgid` bit exploitation
+- Required for high-security deployments
+
+### 7. Network Segmentation
+**Pattern**: Isolate services with separate networks
+
+**Implementation**:
+```yaml
+networks:
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  
+  backend:
+    driver: bridge
+    internal: true              # No external access
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+  
+  monitoring:
+    driver: bridge
+    internal: true              # No external access
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+
+services:
+  app:
+    networks:
+      - frontend               # Public-facing
+      - backend               # Database access
+  
+  postgres:
+    networks:
+      - backend               # Only internal
+  
+  redis:
+    networks:
+      - backend               # Only internal
+```
+
+**Security Benefits**:
+- ✅ Prevents lateral movement
+- ✅ Database not exposed to internet
+- ✅ Monitoring isolated
+- ✅ Defense in depth
+
+### 8. Port Binding to Localhost
+**Pattern**: Bind ports to 127.0.0.1 only (not 0.0.0.0)
+
+**Implementation**:
+```yaml
+services:
+  app:
+    ports:
+      - "127.0.0.1:8000:8000"   # Only accessible from host
+  
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"   # Not exposed to network
+  
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"   # Not exposed to network
+```
+
+**Security Impact**:
+- ✅ Services not exposed to network
+- ✅ Only accessible via localhost/reverse proxy
+- ✅ Prevents direct attacks from internet
+- ✅ Requires nginx/reverse proxy for external access
+
+### 9. Resource Limits
+**Pattern**: Prevent resource exhaustion attacks
+
+**Implementation**:
+```yaml
+services:
+  app:
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+```
+
+**Protection Against**:
+- ✅ CPU exhaustion attacks
+- ✅ Memory bombs
+- ✅ Container resource starvation
+- ✅ Denial of Service
+
+### 10. Health Checks
+**Pattern**: Monitor container health and auto-restart
+
+**Implementation**:
+```yaml
+services:
+  app:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+**Benefits**:
+- ✅ Automatic failure detection
+- ✅ Self-healing infrastructure
+- ✅ Load balancer integration
+- ✅ Zero-downtime deployments
+
+### 11. Secrets Management
+**Pattern**: Never embed secrets in images
+
+**Implementation**:
+```yaml
+services:
+  app:
+    environment:
+      SECRET_KEY: ${SECRET_KEY}              # From .env file
+      DATABASE_URL: postgresql://...        # Runtime environment
+      AZURE_KEYVAULT_URL: ${AZURE_KEYVAULT_URL}
+```
+
+**In Dockerfile**:
+```dockerfile
+# ✅ SECURE - No secrets in image
+ENV PYTHONPATH=/app
+
+# ❌ INSECURE - Never do this
+# ENV SECRET_KEY=hardcoded-secret-123
+```
+
+**Best Practices**:
+- ✅ Use environment variables
+- ✅ Mount secrets as files (Docker secrets)
+- ✅ Use external secret managers (Azure Key Vault)
+- ✅ Rotate secrets regularly
+
+### 12. Image Scanning
+**Pattern**: Scan images for vulnerabilities before deployment
+
+**Implementation**:
+```yaml
+# .github/workflows/security-scan.yml
+- name: Trivy Docker Image Scan
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: 'security-data-fabric:latest'
+    format: 'sarif'
+    severity: 'CRITICAL,HIGH'
+```
+
+**Tools Used**:
+- Trivy (vulnerability scanner)
+- Snyk (dependency checker)
+- Bandit (Python security linter)
+- CodeQL (static analysis)
+
+### 13. Multi-Stage Builds
+**Pattern**: Separate build and runtime environments
+
+**Implementation**:
+```dockerfile
+# Stage 1: Builder (includes build tools)
+FROM python:3.11-slim AS builder
+RUN apt-get install -y gcc g++ libpq-dev
+RUN pip install -r requirements.txt
+
+# Stage 2: Runtime (minimal dependencies)
+FROM python:3.11-slim
+COPY --from=builder /opt/venv /opt/venv
+# Build tools NOT included in final image
+```
+
+**Benefits**:
+- ✅ Smaller final image (no build tools)
+- ✅ Reduced attack surface
+- ✅ Faster deployment
+- ✅ Lower CVE count
+
+### 14. Container Immutability
+**Pattern**: Containers are disposable and immutable
+
+**Implementation**:
+```yaml
+services:
+  app:
+    restart: unless-stopped      # Auto-restart on failure
+    read_only: true             # No modifications
+    tmpfs:                      # Ephemeral storage only
+      - /tmp:size=200M
+```
+
+**Philosophy**:
+- ✅ Never patch running containers
+- ✅ Deploy new containers instead
+- ✅ No state in containers
+- ✅ Easy rollback
+
+### Docker Security Checklist
+
+#### Image Security
+- ✅ Minimal base images (alpine/slim)
+- ✅ Multi-stage builds
+- ✅ No secrets in images
+- ✅ Signed and verified images
+- ✅ Regular vulnerability scanning
+- ✅ Automated security updates
+
+#### Runtime Security
+- ✅ Non-root user execution
+- ✅ Read-only filesystem
+- ✅ Capability dropping (ALL)
+- ✅ No new privileges
+- ✅ Resource limits enforced
+- ✅ Health checks configured
+
+#### Network Security
+- ✅ Network segmentation
+- ✅ Internal-only networks
+- ✅ Localhost-only port binding
+- ✅ No Docker socket exposure
+- ✅ TLS/encryption in transit
+
+#### Access Control
+- ✅ Principle of least privilege
+- ✅ No privileged containers
+- ✅ User namespace remapping
+- ✅ AppArmor/SELinux profiles
+
+#### Monitoring & Logging
+- ✅ Centralized logging
+- ✅ Health monitoring
+- ✅ Resource usage tracking
+- ✅ Security event alerting
+
+### CIS Docker Benchmark Compliance
+
+This implementation follows **CIS Docker Benchmark v1.4.0**:
+
+| Control | Status | Implementation |
+|---------|--------|----------------|
+| 4.1 - Non-root user | ✅ | `USER appuser` |
+| 4.5 - Read-only filesystem | ✅ | `read_only: true` |
+| 4.6 - Bind to localhost | ✅ | `127.0.0.1:port` |
+| 5.1 - Do not disable AppArmor | ✅ | Enabled |
+| 5.3 - Restrict network traffic | ✅ | Network segmentation |
+| 5.7 - Do not mount Docker socket | ✅ | Not mounted |
+| 5.9 - Do not share host network | ✅ | Bridge networks |
+| 5.12 - Mount volumes read-only | ✅ | `:ro` where applicable |
+| 5.25 - Restrict container resources | ✅ | Memory/CPU limits |
+| 5.28 - Use PIDs cgroup limit | ✅ | In deployment config |
+
+### References
+- [CIS Docker Benchmark](https://www.cisecurity.org/benchmark/docker)
+- [Docker Security Best Practices](https://docs.docker.com/engine/security/)
+- [NIST Application Container Security Guide](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-190.pdf)
+- [OWASP Docker Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)
 
 ---
 
