@@ -281,7 +281,10 @@ class TestComplianceReporter:
         }
         gaps = await self.reporter.perform_gap_analysis(control_statuses)
 
-        assert isinstance(gaps, list)
+        assert isinstance(gaps, dict)
+        assert "framework" in gaps
+        assert "gaps" in gaps
+        assert isinstance(gaps["gaps"], list)
 
     @pytest.mark.asyncio
     async def test_get_compliance_history(self) -> None:
