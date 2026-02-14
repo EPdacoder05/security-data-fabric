@@ -86,8 +86,10 @@ class TestAnomalyDetector:
 
         predictions = await self.detector.detect(test_features)
 
-        assert len(predictions) == 4
-        assert predictions[2] == -1  # Anomaly detected
+        assert isinstance(predictions, dict)
+        assert "predictions" in predictions
+        assert len(predictions["predictions"]) == 4
+        assert predictions["predictions"][2] == -1  # Anomaly detected
 
     @pytest.mark.asyncio
     async def test_get_anomaly_score(self) -> None:
@@ -101,17 +103,13 @@ class TestAnomalyDetector:
 
         await self.detector.train(train_features)
 
-        # Get scores for test data
-        test_features = pd.DataFrame(
-            {
-                "value": [100, 200],  # Normal and anomalous
-            }
-        )
+        # Get score for a single data point
+        normal_score = await self.detector.get_anomaly_score({"value": 100})
+        anomalous_score = await self.detector.get_anomaly_score({"value": 200})
 
-        scores = await self.detector.get_anomaly_score(test_features)
-
-        assert len(scores) == 2
-        assert scores[0] > scores[1]  # Normal should have higher score
+        assert isinstance(normal_score, float)
+        assert isinstance(anomalous_score, float)
+        assert normal_score > anomalous_score  # Normal should have higher score
 
     @pytest.mark.asyncio
     async def test_detect_realtime(self) -> None:
@@ -128,9 +126,11 @@ class TestAnomalyDetector:
 
         # Test single observation
         observation = {"metric1": 50, "metric2": 100}
-        is_anomaly = await self.detector.detect_realtime(observation)
+        result = await self.detector.detect_realtime(observation)
 
-        assert isinstance(is_anomaly, bool)
+        assert isinstance(result, dict)
+        assert "is_anomaly" in result
+        assert isinstance(result["is_anomaly"], bool)
 
 
 class TestTimeSeriesForecaster:
@@ -172,10 +172,11 @@ class TestTimeSeriesForecaster:
         await self.forecaster.train(timestamps, values)
 
         # Forecast next 7 days
-        forecast_steps = 7
-        predictions = await self.forecaster.forecast(steps=forecast_steps)
+        forecast_periods = 7
+        predictions = await self.forecaster.forecast(periods=forecast_periods)
 
-        assert isinstance(predictions, (list, np.ndarray))
+        assert isinstance(predictions, dict)
+        assert "predictions" in predictions
 
     @pytest.mark.asyncio
     async def test_forecast_incident_volume(self) -> None:
@@ -210,9 +211,14 @@ class TestTimeSeriesForecaster:
 
         await self.forecaster.train(timestamps, values)
 
-        confidence = await self.forecaster.get_prediction_confidence()
+        # Test confidence with predicted and actual values
+        confidence = await self.forecaster.get_prediction_confidence(
+            predicted_value=10.5, actual_value=10.0
+        )
 
-        assert isinstance(confidence, (float, dict))
+        assert isinstance(confidence, dict)
+        assert "error" in confidence
+        assert "confidence_score" in confidence
 
 
 class TestComplianceReporter:
@@ -240,46 +246,60 @@ class TestComplianceReporter:
     @pytest.mark.asyncio
     async def test_check_compliance(self) -> None:
         """Test checking compliance status."""
-        control_data = {
-            "control_id": "CC1.1",
-            "evidence": {
-                "policy_exists": True,
-                "training_completed": True,
-            },
+        control_id = "CC1.1"
+        evidence = {
+            "policy_exists": True,
+            "training_completed": True,
         }
 
-        result = await self.reporter.check_compliance(control_data)
+        result = await self.reporter.check_compliance(control_id, evidence)
 
         assert isinstance(result, dict)
+        assert "status" in result
 
     @pytest.mark.asyncio
     async def test_generate_compliance_report(self) -> None:
         """Test generating a compliance report."""
-        report = await self.reporter.generate_compliance_report()
+        # Provide control statuses
+        control_statuses = {
+            "CC1.1": ComplianceStatus.COMPLIANT,
+            "CC1.2": ComplianceStatus.NON_COMPLIANT,
+        }
+        report = await self.reporter.generate_compliance_report(control_statuses)
 
         assert isinstance(report, dict)
-        assert "framework" in report or isinstance(report, dict)
+        assert "framework" in report
 
     @pytest.mark.asyncio
     async def test_perform_gap_analysis(self) -> None:
         """Test performing gap analysis."""
-        gaps = await self.reporter.perform_gap_analysis()
+        # Provide control statuses for gap analysis
+        control_statuses = {
+            "CC1.1": ComplianceStatus.COMPLIANT,
+            "CC1.2": ComplianceStatus.NON_COMPLIANT,
+        }
+        gaps = await self.reporter.perform_gap_analysis(control_statuses)
 
-        assert isinstance(gaps, (list, dict))
+        assert isinstance(gaps, list)
 
     @pytest.mark.asyncio
     async def test_get_compliance_history(self) -> None:
         """Test getting compliance history."""
-        history = await self.reporter.get_compliance_history()
+        control_id = "CC1.1"
+        history = await self.reporter.get_compliance_history(control_id, days=30)
 
         assert isinstance(history, list)
 
     @pytest.mark.asyncio
     async def test_track_compliance_over_time(self) -> None:
         """Test tracking compliance over time."""
-        tracking_data = await self.reporter.track_compliance_over_time(days=30)
-
-        assert isinstance(tracking_data, (list, dict))
+        control_id = "CC1.1"
+        status = ComplianceStatus.COMPLIANT
+        
+        await self.reporter.track_compliance_over_time(control_id, status)
+        
+        # Verify tracking was successful (no exception raised)
+        assert True
 
 
 class TestSLATracker:

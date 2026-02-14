@@ -336,11 +336,11 @@ class PrometheusMetrics:
         sla_samples = list(self.sla_breaches.collect()[0].samples)
         
         return {
-            "api_requests_total": float(sum([s._value.get() for s in api_samples])),
+            "api_requests_total": float(sum([s.value for s in api_samples])),
             "cache_hit_rate": self.get_cache_hit_rate("redis", "*"),
             "active_sessions": float(self.active_sessions._value.get()),
-            "anomalies_total": float(sum([s._value.get() for s in anomaly_samples])),
-            "sla_breaches_total": float(sum([s._value.get() for s in sla_samples])),
+            "anomalies_total": float(sum([s.value for s in anomaly_samples])),
+            "sla_breaches_total": float(sum([s.value for s in sla_samples])),
         }
 
 

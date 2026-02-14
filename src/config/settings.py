@@ -56,17 +56,17 @@ class Settings(BaseSettings):
     okta_client_secret: str = ""  # Loaded from Key Vault
 
     @property
-    def OKTA_DOMAIN(self) -> str:
+    def OKTA_DOMAIN(self) -> str:  # noqa: N802
         """Uppercase alias for okta_domain."""
         return self.okta_domain
 
     @property
-    def OKTA_API_TOKEN(self) -> str:
+    def OKTA_API_TOKEN(self) -> str:  # noqa: N802
         """Uppercase alias for okta_client_secret."""
         return self.okta_client_secret
 
     @property
-    def AZURE_KEY_VAULT_URL(self) -> str:
+    def AZURE_KEY_VAULT_URL(self) -> str:  # noqa: N802
         """Uppercase alias for azure_keyvault_url."""
         return self.azure_keyvault_url
 
