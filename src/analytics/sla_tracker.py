@@ -309,7 +309,8 @@ class SLATracker:
         )
 
         metrics_by_severity = {}
-        for severity in SLASeverity:
+        # Explicitly iterate over enum members for CodeQL compatibility
+        for severity in list(SLASeverity):
             severity_incidents = [
                 sla for sla in resolved_incidents if sla["severity"] == severity.value
             ]

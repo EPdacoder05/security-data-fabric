@@ -68,7 +68,8 @@ class SecretRotationManager:
             Dictionary mapping secret types to rotation success status
         """
         results = {}
-        for secret_type in SecretType:
+        # Explicitly iterate over enum members for CodeQL compatibility
+        for secret_type in list(SecretType):
             if await self.check_rotation_needed(secret_type):
                 results[secret_type.value] = await self.rotate_secret(secret_type)
         return results
