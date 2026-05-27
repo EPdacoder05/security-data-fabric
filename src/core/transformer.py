@@ -83,12 +83,12 @@ def normalize_severity(raw_severity: str, source: str) -> str:
     Returns:
         Canonical severity string: CRITICAL | HIGH | MEDIUM | LOW | INFO
     """
-    mapping: Dict[str, str] = {
+    mapping: Dict[str, Dict[str, str]] = {
         "servicenow": _SERVICENOW_PRIORITY_MAP,
         "grafana": _GRAFANA_SEVERITY_MAP,
         "defender": _DEFENDER_SEVERITY_MAP,
     }
-    source_map = mapping.get(source, {})
+    source_map: Dict[str, str] = mapping.get(source, {})
     return source_map.get(raw_severity, "MEDIUM")
 
 

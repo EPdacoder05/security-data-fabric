@@ -153,7 +153,7 @@ class TestNarrativeGeneration:
 
     @pytest.mark.asyncio
     async def test_red_narrative_mentions_critical(self):
-        from src.core.gold_aggregator import GoldAggregator, TrafficLight
+        from src.core.gold_aggregator import TrafficLight
         chatbot = ChatbotLiveTemplates()
         narrative = chatbot._light_to_prose(TrafficLight.RED, "ACME", ["3 critical incidents"])
         assert "RED" in narrative
@@ -161,14 +161,14 @@ class TestNarrativeGeneration:
 
     @pytest.mark.asyncio
     async def test_yellow_narrative_mentions_elevated(self):
-        from src.core.gold_aggregator import GoldAggregator, TrafficLight
+        from src.core.gold_aggregator import TrafficLight
         chatbot = ChatbotLiveTemplates()
         narrative = chatbot._light_to_prose(TrafficLight.YELLOW, "ACME", [])
         assert "YELLOW" in narrative
 
     @pytest.mark.asyncio
     async def test_green_narrative_mentions_healthy(self):
-        from src.core.gold_aggregator import GoldAggregator, TrafficLight
+        from src.core.gold_aggregator import TrafficLight
         chatbot = ChatbotLiveTemplates()
         narrative = chatbot._light_to_prose(TrafficLight.GREEN, "ACME", [])
         assert "GREEN" in narrative

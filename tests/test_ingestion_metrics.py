@@ -8,7 +8,6 @@ Verifies that IngestionMetrics fields are always consistent:
 - Status reflects the outcome correctly
 """
 
-import asyncio
 
 import pytest
 
@@ -19,7 +18,6 @@ from src.data.fixtures.mock_grafana_incidents import (
     MOCK_SERVICENOW_INCIDENTS,
     MOCK_USATODAY_BREACHES,
 )
-
 
 # ---------------------------------------------------------------------------
 # Metrics field consistency

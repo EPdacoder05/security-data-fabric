@@ -89,7 +89,11 @@ class DimensionPopulator:
                 industry=industry,
             )
             self._org_id_counter += 1
-            logger.debug("Created org dimension: %s (id=%d)", org_name, self._organizations[key].org_id)
+            logger.debug(
+                "Created org dimension: %s (id=%d)",
+                org_name,
+                self._organizations[key].org_id,
+            )
         return self._organizations[key]
 
     def get_org_id(self, org_name: str) -> Optional[int]:

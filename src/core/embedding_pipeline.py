@@ -8,9 +8,8 @@ import hashlib
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
-from unittest.mock import MagicMock
 
 logger = logging.getLogger(__name__)
 
@@ -294,12 +293,12 @@ class EmbeddingPipeline:
         """
         if len(a) != len(b):
             return 0.0
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         mag_a = sum(x * x for x in a) ** 0.5
         mag_b = sum(x * x for x in b) ** 0.5
         if mag_a == 0 or mag_b == 0:
             return 0.0
-        return dot / (mag_a * mag_b)
+        return float(dot / (mag_a * mag_b))
 
     def semantic_search(
         self,

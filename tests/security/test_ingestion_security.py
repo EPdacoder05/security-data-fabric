@@ -10,7 +10,6 @@ import pytest
 from src.core.ingestion_pipeline import IngestionPipeline, IngestionStatus
 from src.security.input_validator import InputValidator, ThreatType
 
-
 # ---------------------------------------------------------------------------
 # InputValidator unit tests (no pipeline overhead)
 # ---------------------------------------------------------------------------
