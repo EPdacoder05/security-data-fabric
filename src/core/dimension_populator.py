@@ -49,12 +49,20 @@ class DimensionPopulator:
     """
 
     _MONTH_NAMES = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
     ]
-    _DAY_NAMES = [
-        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-    ]
+    _DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     def __init__(self) -> None:
         """Initialize dimension stores."""
@@ -67,9 +75,7 @@ class DimensionPopulator:
     # DimOrganization
     # ------------------------------------------------------------------
 
-    def get_or_create_org(
-        self, org_name: str, industry: str = "Unknown"
-    ) -> DimOrganization:
+    def get_or_create_org(self, org_name: str, industry: str = "Unknown") -> DimOrganization:
         """Return existing org dimension row or create a new one.
 
         Args:
@@ -89,7 +95,11 @@ class DimensionPopulator:
                 industry=industry,
             )
             self._org_id_counter += 1
-            logger.debug("Created org dimension: %s (id=%d)", org_name, self._organizations[key].org_id)
+            logger.debug(
+                "Created org dimension: %s (id=%d)",
+                org_name,
+                self._organizations[key].org_id,
+            )
         return self._organizations[key]
 
     def get_org_id(self, org_name: str) -> Optional[int]:

@@ -73,9 +73,7 @@ class ChatbotLiveTemplates:
     # Traffic light narrative
     # ------------------------------------------------------------------
 
-    def _light_to_prose(
-        self, light: TrafficLight, org_name: str, risk_factors: List[str]
-    ) -> str:
+    def _light_to_prose(self, light: TrafficLight, org_name: str, risk_factors: List[str]) -> str:
         """Convert a traffic light status into a narrative sentence.
 
         Args:
@@ -173,7 +171,8 @@ class ChatbotLiveTemplates:
         severity_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
 
         incidents = [
-            i for i in self._incidents
+            i
+            for i in self._incidents
             if (
                 (org_name is None or getattr(i, "org_name", "") == org_name)
                 and getattr(i, "status", "") not in ("resolved", "closed")
@@ -203,11 +202,8 @@ class ChatbotLiveTemplates:
         ]
 
         target_text = f" for {org_name}" if org_name else ""
-        narrative = (
-            f"Top {len(top)} open incident(s){target_text}: "
-            + "; ".join(
-                f"[{i['severity']}] {i['title'][:60]}" for i in incident_list
-            )
+        narrative = f"Top {len(top)} open incident(s){target_text}: " + "; ".join(
+            f"[{i['severity']}] {i['title'][:60]}" for i in incident_list
         )
 
         return ChatbotResponse(
@@ -262,10 +258,7 @@ class ChatbotLiveTemplates:
             if cves:
                 corr_text = f" Active CVE correlations: {', '.join(cves[:3])}."
 
-        narrative = (
-            f"Breach risk for {kpi.org_name}: {risk:.0f}/100 ({level}). "
-            f"{action}{corr_text}"
-        )
+        narrative = f"Breach risk for {kpi.org_name}: {risk:.0f}/100 ({level}). {action}{corr_text}"
 
         return ChatbotResponse(
             query_type="breach_risk",
@@ -276,8 +269,7 @@ class ChatbotLiveTemplates:
                 "breach_risk_score": risk,
                 "risk_level": level,
                 "correlations": [
-                    {"cve": c.shared_cve, "confidence": c.confidence_score}
-                    for c in correlations
+                    {"cve": c.shared_cve, "confidence": c.confidence_score} for c in correlations
                 ],
             },
         )
@@ -340,9 +332,7 @@ class ChatbotLiveTemplates:
             },
         )
 
-    def get_vulnerability_summary(
-        self, org_name: Optional[str] = None
-    ) -> ChatbotResponse:
+    def get_vulnerability_summary(self, org_name: Optional[str] = None) -> ChatbotResponse:
         """Return vulnerability summary for an organization.
 
         Args:
@@ -352,7 +342,8 @@ class ChatbotLiveTemplates:
             ChatbotResponse with vulnerability narrative
         """
         vulns = [
-            v for v in self._vulnerabilities
+            v
+            for v in self._vulnerabilities
             if (org_name is None or getattr(v, "org_name", "") == org_name)
             and getattr(v, "status", "") not in ("resolved", "closed")
         ]
@@ -375,9 +366,7 @@ class ChatbotLiveTemplates:
         parts = [f"{count} {sev}" for sev, count in sorted(severity_counts.items())]
         target_text = f" for {org_name}" if org_name else ""
         narrative = (
-            f"Vulnerability summary{target_text}: {len(vulns)} open. "
-            + ", ".join(parts)
-            + "."
+            f"Vulnerability summary{target_text}: {len(vulns)} open. " + ", ".join(parts) + "."
         )
 
         return ChatbotResponse(

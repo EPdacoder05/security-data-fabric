@@ -2,14 +2,13 @@
 
 import pytest
 
-from src.core.ingestion_pipeline import IngestionMetrics, IngestionPipeline, IngestionStatus
+from src.core.ingestion_pipeline import IngestionPipeline, IngestionStatus
 from src.data.fixtures.mock_grafana_incidents import (
     MOCK_DEFENDER_INCIDENTS,
     MOCK_GRAFANA_ALERTS,
     MOCK_SERVICENOW_INCIDENTS,
     MOCK_USATODAY_BREACHES,
 )
-
 
 # ---------------------------------------------------------------------------
 # TestMockDataFixtures

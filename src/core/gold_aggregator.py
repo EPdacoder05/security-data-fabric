@@ -163,10 +163,7 @@ class GoldAggregator:
         now = datetime.now(timezone.utc)
 
         # MTTR - average hours from created_at to resolved_at
-        resolved = [
-            i for i in incidents
-            if getattr(i, "resolved_at", None) is not None
-        ]
+        resolved = [i for i in incidents if getattr(i, "resolved_at", None) is not None]
         if resolved:
             durations = []
             for inc in resolved:
@@ -181,21 +178,18 @@ class GoldAggregator:
 
         # Open incident count
         open_incidents = [
-            i for i in incidents
-            if getattr(i, "status", "") not in ("resolved", "closed")
+            i for i in incidents if getattr(i, "status", "") not in ("resolved", "closed")
         ]
         open_count = len(open_incidents)
 
         # Critical open incidents
-        critical_open = [
-            i for i in open_incidents
-            if getattr(i, "severity", "") == "CRITICAL"
-        ]
+        critical_open = [i for i in open_incidents if getattr(i, "severity", "") == "CRITICAL"]
         critical_incident_count = len(critical_open)
 
         # Critical vulns
         critical_vulns = [
-            v for v in vulnerabilities
+            v
+            for v in vulnerabilities
             if getattr(v, "severity", "") == "CRITICAL"
             and getattr(v, "status", "") not in ("resolved", "closed")
         ]
@@ -205,17 +199,14 @@ class GoldAggregator:
         # Base: (critical incidents × 15) + (critical vulns × 10) + breach context
         breach_risk = min(
             100.0,
-            critical_incident_count * 15.0
-            + critical_vuln_count * 10.0
-            + len(breaches) * 5.0,
+            critical_incident_count * 15.0 + critical_vuln_count * 10.0 + len(breaches) * 5.0,
         )
 
         # Detection rate (auto-detected vs manually found)
         # Simplified: grafana/defender = auto, servicenow = manual
         if incidents:
             auto_detected = sum(
-                1 for i in incidents
-                if getattr(i, "source", "") in ("grafana", "defender")
+                1 for i in incidents if getattr(i, "source", "") in ("grafana", "defender")
             )
             detection_rate = auto_detected / len(incidents)
         else:
@@ -253,9 +244,7 @@ class GoldAggregator:
     # Incident trend analysis
     # ------------------------------------------------------------------
 
-    def compute_incident_trends(
-        self, incidents: list, weeks: int = 4
-    ) -> List[IncidentTrend]:
+    def compute_incident_trends(self, incidents: list, weeks: int = 4) -> List[IncidentTrend]:
         """Compute weekly incident trends per organization.
 
         Args:
@@ -280,7 +269,8 @@ class GoldAggregator:
                 week_start = week_end - timedelta(weeks=1)
 
                 week_incs = [
-                    i for i in org_incidents
+                    i
+                    for i in org_incidents
                     if week_start <= getattr(i, "created_at", now) <= week_end
                 ]
 

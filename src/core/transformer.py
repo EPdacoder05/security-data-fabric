@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
-_IP_RE = re.compile(
-    r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b"
-)
+_IP_RE = re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b")
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _CC_RE = re.compile(r"\b(?:\d[ -]?){13,16}\b")
 
@@ -83,12 +81,12 @@ def normalize_severity(raw_severity: str, source: str) -> str:
     Returns:
         Canonical severity string: CRITICAL | HIGH | MEDIUM | LOW | INFO
     """
-    mapping: Dict[str, str] = {
+    mapping: Dict[str, Dict[str, str]] = {
         "servicenow": _SERVICENOW_PRIORITY_MAP,
         "grafana": _GRAFANA_SEVERITY_MAP,
         "defender": _DEFENDER_SEVERITY_MAP,
     }
-    source_map = mapping.get(source, {})
+    source_map: Dict[str, str] = mapping.get(source, {})
     return source_map.get(raw_severity, "MEDIUM")
 
 
@@ -198,9 +196,7 @@ class SilverTransformer:
         """
         import json
 
-        return hashlib.sha256(
-            json.dumps(payload, sort_keys=True, default=str).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
     def _parse_dt(self, value: Optional[str]) -> Optional[datetime]:
         """Parse an ISO datetime string into a timezone-aware datetime.

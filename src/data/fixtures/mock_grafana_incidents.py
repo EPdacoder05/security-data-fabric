@@ -8,7 +8,9 @@ MOCK_SERVICENOW_INCIDENTS = [
     {
         "number": "INC0087431",
         "short_description": "DNS resolution failure on financial servers",
-        "description": "Multiple containers unable to resolve phq-vm-fin-01. Cascading DNS failures.",
+        "description": (
+            "Multiple containers unable to resolve phq-vm-fin-01. Cascading DNS failures."
+        ),
         "priority": "1",
         "state": "2",
         "assigned_to": "john.doe@company.com",
@@ -36,7 +38,9 @@ MOCK_SERVICENOW_INCIDENTS = [
     {
         "number": "INC0087433",
         "short_description": "OpenSSL CVE-2025-12349 unpatched on 3 finance servers",
-        "description": "Critical vulnerability detected on pex-docker-01, pex-docker-02, pex-docker-03.",
+        "description": (
+            "Critical vulnerability detected on pex-docker-01, pex-docker-02, pex-docker-03."
+        ),
         "priority": "2",
         "state": "1",
         "assigned_to": "sec.team@company.com",
@@ -83,7 +87,9 @@ MOCK_GRAFANA_ALERTS = [
         "state": "alerting",
         "severity": "high",
         "summary": "ALB health checks failing - cascade from DNS failure",
-        "description": "pex-alb-prod-01 cannot reach backend targets due to DNS resolution failures",
+        "description": (
+            "pex-alb-prod-01 cannot reach backend targets due to DNS resolution failures"
+        ),
         "instance": "pex-alb-prod-01:9090",
         "job": "load-balancer-monitoring",
         "startsAt": "2026-02-20T08:35:00Z",
@@ -96,7 +102,9 @@ MOCK_GRAFANA_ALERTS = [
         "state": "alerting",
         "severity": "high",
         "summary": "Container restart rate >10/minute on pex-docker cluster",
-        "description": "Docker containers entering crash loop due to DNS-dependent service failures",
+        "description": (
+            "Docker containers entering crash loop due to DNS-dependent service failures"
+        ),
         "instance": "pex-docker-02:9090",
         "job": "container-monitoring",
         "startsAt": "2026-02-20T08:40:00Z",
@@ -109,7 +117,9 @@ MOCK_GRAFANA_ALERTS = [
         "state": "alerting",
         "severity": "critical",
         "summary": "CVE-2025-12349 detected on 3 production servers",
-        "description": "Critical OpenSSL vulnerability on pex-docker-01, 02, 03 requires immediate patching",
+        "description": (
+            "Critical OpenSSL vulnerability on pex-docker-01, 02, 03 requires immediate patching"
+        ),
         "instance": "pex-docker-03:9090",
         "job": "vulnerability-scanning",
         "startsAt": "2026-02-19T14:00:00Z",
@@ -159,7 +169,9 @@ MOCK_DEFENDER_INCIDENTS = [
         "classification": "FalsePositive",
         "category": "SuspiciousActivity",
         "impactedAssets": [{"type": "Device", "id": "dev-workstation-05"}],
-        "description": "Encoded PowerShell command flagged - confirmed legitimate DevOps automation",
+        "description": (
+            "Encoded PowerShell command flagged - confirmed legitimate DevOps automation"
+        ),
         "assignedTo": "soc-tier1@company.com",
         "org_name": "Engineering",
     },

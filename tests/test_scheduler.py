@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.core.ingestion_pipeline import IngestionPipeline, IngestionStatus
-from src.core.scheduler import ConnectorStatus, ConnectorType, Scheduler, SchedulerMetrics
+from src.core.ingestion_pipeline import IngestionPipeline
+from src.core.scheduler import ConnectorStatus, ConnectorType, Scheduler
 from src.data.fixtures.mock_grafana_incidents import MOCK_SERVICENOW_INCIDENTS
 
 

@@ -8,8 +8,6 @@ Verifies that IngestionMetrics fields are always consistent:
 - Status reflects the outcome correctly
 """
 
-import asyncio
-
 import pytest
 
 from src.core.ingestion_pipeline import IngestionMetrics, IngestionPipeline, IngestionStatus
@@ -19,7 +17,6 @@ from src.data.fixtures.mock_grafana_incidents import (
     MOCK_SERVICENOW_INCIDENTS,
     MOCK_USATODAY_BREACHES,
 )
-
 
 # ---------------------------------------------------------------------------
 # Metrics field consistency
@@ -146,8 +143,9 @@ class TestMetricsErrorMessages:
         assert metrics.quarantined_records == 1
         assert len(metrics.error_messages) >= 1
         # Error message should mention threat type
-        assert any("threat" in msg.lower() or "security" in msg.lower()
-                   for msg in metrics.error_messages)
+        assert any(
+            "threat" in msg.lower() or "security" in msg.lower() for msg in metrics.error_messages
+        )
 
     @pytest.mark.asyncio
     async def test_multiple_quarantined_records_have_error_messages(self):
