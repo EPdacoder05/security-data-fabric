@@ -222,10 +222,20 @@ class TestCleanDataNotQuarantined:
         """After ingestion, clean records must be present in the Bronze store."""
         pipeline = IngestionPipeline()
         clean = [
-            {"number": "INC0099003", "short_description": "Memory warning", "priority": "3",
-             "state": "1", "org_name": "Engineering"},
-            {"number": "INC0099004", "short_description": "Network latency spike", "priority": "2",
-             "state": "1", "org_name": "IT"},
+            {
+                "number": "INC0099003",
+                "short_description": "Memory warning",
+                "priority": "3",
+                "state": "1",
+                "org_name": "Engineering",
+            },
+            {
+                "number": "INC0099004",
+                "short_description": "Network latency spike",
+                "priority": "2",
+                "state": "1",
+                "org_name": "IT",
+            },
         ]
         metrics = await pipeline.ingest_batch("servicenow", clean)
         assert metrics.successful_records == 2

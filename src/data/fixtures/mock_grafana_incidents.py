@@ -9,8 +9,7 @@ MOCK_SERVICENOW_INCIDENTS = [
         "number": "INC0087431",
         "short_description": "DNS resolution failure on financial servers",
         "description": (
-            "Multiple containers unable to resolve phq-vm-fin-01. "
-            "Cascading DNS failures."
+            "Multiple containers unable to resolve phq-vm-fin-01. Cascading DNS failures."
         ),
         "priority": "1",
         "state": "2",
@@ -40,8 +39,7 @@ MOCK_SERVICENOW_INCIDENTS = [
         "number": "INC0087433",
         "short_description": "OpenSSL CVE-2025-12349 unpatched on 3 finance servers",
         "description": (
-            "Critical vulnerability detected on pex-docker-01, "
-            "pex-docker-02, pex-docker-03."
+            "Critical vulnerability detected on pex-docker-01, pex-docker-02, pex-docker-03."
         ),
         "priority": "2",
         "state": "1",
@@ -90,8 +88,7 @@ MOCK_GRAFANA_ALERTS = [
         "severity": "high",
         "summary": "ALB health checks failing - cascade from DNS failure",
         "description": (
-            "pex-alb-prod-01 cannot reach backend targets due to DNS "
-            "resolution failures"
+            "pex-alb-prod-01 cannot reach backend targets due to DNS resolution failures"
         ),
         "instance": "pex-alb-prod-01:9090",
         "job": "load-balancer-monitoring",
@@ -106,8 +103,7 @@ MOCK_GRAFANA_ALERTS = [
         "severity": "high",
         "summary": "Container restart rate >10/minute on pex-docker cluster",
         "description": (
-            "Docker containers entering crash loop due to DNS-dependent "
-            "service failures"
+            "Docker containers entering crash loop due to DNS-dependent service failures"
         ),
         "instance": "pex-docker-02:9090",
         "job": "container-monitoring",
@@ -122,8 +118,7 @@ MOCK_GRAFANA_ALERTS = [
         "severity": "critical",
         "summary": "CVE-2025-12349 detected on 3 production servers",
         "description": (
-            "Critical OpenSSL vulnerability on pex-docker-01, 02, 03 "
-            "requires immediate patching"
+            "Critical OpenSSL vulnerability on pex-docker-01, 02, 03 requires immediate patching"
         ),
         "instance": "pex-docker-03:9090",
         "job": "vulnerability-scanning",
@@ -175,8 +170,7 @@ MOCK_DEFENDER_INCIDENTS = [
         "category": "SuspiciousActivity",
         "impactedAssets": [{"type": "Device", "id": "dev-workstation-05"}],
         "description": (
-            "Encoded PowerShell command flagged - confirmed legitimate "
-            "DevOps automation"
+            "Encoded PowerShell command flagged - confirmed legitimate DevOps automation"
         ),
         "assignedTo": "soc-tier1@company.com",
         "org_name": "Engineering",

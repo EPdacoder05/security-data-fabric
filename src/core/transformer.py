@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
-_IP_RE = re.compile(
-    r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b"
-)
+_IP_RE = re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b")
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _CC_RE = re.compile(r"\b(?:\d[ -]?){13,16}\b")
 
@@ -198,9 +196,7 @@ class SilverTransformer:
         """
         import json
 
-        return hashlib.sha256(
-            json.dumps(payload, sort_keys=True, default=str).encode()
-        ).hexdigest()
+        return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
 
     def _parse_dt(self, value: Optional[str]) -> Optional[datetime]:
         """Parse an ISO datetime string into a timezone-aware datetime.
