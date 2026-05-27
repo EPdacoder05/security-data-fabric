@@ -269,6 +269,18 @@ poetry run pytest --cov=src --cov-report=html
 poetry run pytest tests/test_security.py
 ```
 
+### CI Quality Check Reference
+
+Run these before opening/updating a PR to avoid CI lint/type regressions:
+
+```bash
+ruff format src/ tests/
+ruff format --check src/ tests/
+ruff check src/ tests/
+mypy src/ --ignore-missing-imports
+PYTHONPATH=. pytest tests/ -q
+```
+
 ## API Endpoints
 
 ### Authentication

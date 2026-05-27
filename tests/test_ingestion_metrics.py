@@ -276,9 +276,9 @@ def _assert_totals_consistent(metrics: IngestionMetrics) -> None:
         + metrics.quarantined_records
         + metrics.duplicate_records
     )
-    assert accounted <= metrics.total_records, (
-        f"Accounted ({accounted}) > total ({metrics.total_records}): {metrics}"
-    )
+    assert (
+        accounted <= metrics.total_records
+    ), f"Accounted ({accounted}) > total ({metrics.total_records}): {metrics}"
     assert metrics.successful_records >= 0
     assert metrics.failed_records >= 0
     assert metrics.quarantined_records >= 0
