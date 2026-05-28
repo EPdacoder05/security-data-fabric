@@ -2,6 +2,36 @@
 
 Enterprise security analytics platform that ingests data from 10+ security/IT sources, curates it via 3-tier medallion architecture, and powers Power BI dashboards with semantic intelligence.
 
+## Documentation Pack
+
+Complete business, architecture, operations, strategy, and executive reference for the Security Data Fabric platform.
+
+### How to Use This Doc Pack
+
+Suggested reading order:
+
+1. [One-Page CISO Brief](docs/executive/one-page-ciso-brief.md) — start here for executive context
+2. [Tool Comparison Matrix](docs/strategy/tool-comparison-matrix.md) — understand positioning vs. Grafana and Datadog
+3. [Cost Model](docs/business/cost-model.md) + [ROI & Incident Economics](docs/business/roi-and-incident-economics.md) — financial justification
+4. [Pilot Plan — 8 Weeks](docs/strategy/pilot-plan-8-weeks.md) — delivery timeline and success criteria
+5. [Deployment Logistics Runbook](docs/operations/deployment-logistics-runbook.md) + [IaC Resource Matrix](docs/architecture/iac-resource-matrix.md) — operational execution
+
+### Document Index
+
+| Document | Description |
+|---|---|
+| [docs/executive/one-page-ciso-brief.md](docs/executive/one-page-ciso-brief.md) | Board-ready summary: problem, solution, outcomes, cost, and what's needed to start |
+| [docs/strategy/tool-comparison-matrix.md](docs/strategy/tool-comparison-matrix.md) | Head-to-head: Grafana manual vs. Datadog vs. combined stack across 10 capability dimensions |
+| [docs/business/cost-model.md](docs/business/cost-model.md) | Monthly/annual infrastructure costs by component, peak vs. base, and program envelope rationale |
+| [docs/business/roi-and-incident-economics.md](docs/business/roi-and-incident-economics.md) | Incident cost framework, KPI targets, and ROI calculation baseline |
+| [docs/strategy/pilot-plan-8-weeks.md](docs/strategy/pilot-plan-8-weeks.md) | Week-by-week delivery plan, entry/exit criteria, and 90-day KPI scorecard |
+| [docs/strategy/non-goals-and-limitations.md](docs/strategy/non-goals-and-limitations.md) | What the platform does not do and known limitations with mitigations |
+| [docs/operations/deployment-logistics-runbook.md](docs/operations/deployment-logistics-runbook.md) | Phase-by-phase pre-flight through production cutover checklist |
+| [docs/operations/integration-dependencies.md](docs/operations/integration-dependencies.md) | External system access requirements, owners, and dependency risks |
+| [docs/architecture/iac-resource-matrix.md](docs/architecture/iac-resource-matrix.md) | Terraform module inventory by environment (dev/stage/prod) with deployment order |
+
+---
+
 ## Architecture
 
 ```
